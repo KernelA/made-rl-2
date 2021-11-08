@@ -12,10 +12,16 @@ handlers:
     level: DEBUG
     formatter: default_console_thread
     stream: ext://sys.stdout
-loggers:
-  custom:
+  file:
+    class: logging.FileHandler
     level: DEBUG
-    handlers: [console]
+    filename: tictoc.log 
+    encoding: utf-8
+    mode: 'w'
+loggers:
+  tictoc:
+    level: DEBUG
+    handlers: [file]
     propagate: no
 root:
   level: INFO
