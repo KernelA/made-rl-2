@@ -49,7 +49,7 @@ class MinMaxTree:
         with open(path_to_file, "rb") as dump_file:
             return pickle.load(dump_file)
 
-    def _minmax_tt(self, node: Node, is_max: bool) -> Tuple[int, StepType]:
+    def _minmax_tt(self, node: Node, alpha: Optional[float], beta: Optional[float], is_max: bool) -> Tuple[int, StepType]:
         if node.is_leaf:
             return node.reward, node.step
 
@@ -58,12 +58,18 @@ class MinMaxTree:
         if is_max:
             max_func = gt
 
-        scores = (self._minmax_tt(child_node, not is_max) for child_node in node.children)
+        children_iter = iter(node.children)
 
-        iter_score = iter(scores)
-        best_score, best_step = next(scores)
+        best_score, best_step = self._minmax_tt(next(children_iter), alpha, beta, not is_max)
 
-        for score, step in iter_score:
+        if is_max:
+            alpha = best_score
+        else:
+            beta = best_score
+
+        for child_node in children_iter:
+            score, step = self._minmax_tt(child_node, alpha, beta, not is_max)
+
             if max_func(score, best_score):
                 best_score = score
                 best_step = step
@@ -72,6 +78,16 @@ class MinMaxTree:
                     best_score = score
                     best_step = step
 
+            if is_max:
+                if beta is not None and best_score > beta:
+                    break
+
+                alpha = max(alpha, best_score)
+            else:
+                if alpha is not None and best_score < alpha:
+                    break
+                beta = min(beta, best_score)
+
         return best_score, best_step
 
     def best_move(self, hash_table_state: str, is_max: bool) -> StepType:
@@ -79,4 +95,4 @@ class MinMaxTree:
         if node is None:
             raise ValueError(f"Cannot find hash state for '{hash_table_state}'")
 
-        return self._minmax_tt(node, is_max)[1]
+        return self._minmax_tt(node, None, None, is_max)[1]
