@@ -1,4 +1,4 @@
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Iterable
 from operator import gt, lt
 import pickle
 import random
@@ -18,7 +18,8 @@ def r_build_minmax_tree(tic_tac_env: TicTacToe, parent_node: Node, hash_table: d
         new_env = tic_tac_env.clone()
         node_name, reward, is_end = new_env.step(pos)
         node = Node(node_name[0], parent=parent_node, reward=reward, step=tuple(pos))
-        hash_table[node.name] = node
+        path = node.separator.join([""] + [str(node_path.name) for node_path in node.path])
+        hash_table[path] = node
 
         if not is_end:
             r_build_minmax_tree(new_env, node, hash_table)
@@ -60,7 +61,9 @@ class MinMaxTree:
 
         children_iter = iter(node.children)
 
-        best_score, best_step = self._minmax_tt(next(children_iter), alpha, beta, not is_max)
+        first_node = next(children_iter)
+        best_step = first_node.step
+        best_score, _ = self._minmax_tt(first_node, alpha, beta, not is_max)
 
         if is_max:
             alpha = best_score
@@ -68,15 +71,15 @@ class MinMaxTree:
             beta = best_score
 
         for child_node in children_iter:
-            score, step = self._minmax_tt(child_node, alpha, beta, not is_max)
+            score, _ = self._minmax_tt(child_node, alpha, beta, not is_max)
 
             if max_func(score, best_score):
                 best_score = score
-                best_step = step
+                best_step = child_node.step
             elif score == best_score:
                 if self._generator.random() < 0.5:
                     best_score = score
-                    best_step = step
+                    best_step = child_node.step
 
             if is_max:
                 if beta is not None and best_score > beta:
@@ -90,9 +93,11 @@ class MinMaxTree:
 
         return best_score, best_step
 
-    def best_move(self, hash_table_state: str, is_max: bool) -> StepType:
-        node = self.node_hash_table.get(hash_table_state)
-        if node is None:
-            raise ValueError(f"Cannot find hash state for '{hash_table_state}'")
+    def get_node_by_step_history(self, node_history: Iterable[str]) -> Node:
+        node_path = f"{self.root.separator}{self.root.name}{self.root.separator}" + \
+            f"{self.root.separator}".join(node_history)
+        return self.node_hash_table[node_path]
 
+    def best_move(self, node_history: Iterable[str], is_max: bool) -> StepType:
+        node = self.get_node_by_step_history(node_history)
         return self._minmax_tt(node, None, None, is_max)[1]

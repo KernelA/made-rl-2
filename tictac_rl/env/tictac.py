@@ -81,6 +81,9 @@ class TicTacToe:
         self.emptySpaces = None
         self.boardHash = None
 
+    def _change_turn(self):
+        self.curTurn = -self.curTurn
+
     def _getHash(self):
         if self.boardHash is None:
             self.boardHash = ''.join(
@@ -91,20 +94,22 @@ class TicTacToe:
         # проверим, не закончилась ли игра
         return is_terminal(self.board, self.curTurn, self.n_win)
 
-    def printBoard(self):
+    def _str_repr(self, board):
+        board_repr = ""
         for i in range(self.n_rows):
-            print('----'*(self.n_cols)+'-')
+            board_repr += "\n" + '----' * (self.n_cols) + '-'
             out = '| '
             for j in range(self.n_cols):
-                if self.board[i, j] == 1:
+                if board[i, j] == 1:
                     token = 'x'
-                elif self.board[i, j] == -1:
+                elif board[i, j] == -1:
                     token = 'o'
                 else:
                     token = ' '
                 out += token + ' | '
-            print(out)
-        print('----'*(self.n_cols)+'-')
+            board_repr += f"\n{out}"
+        board_repr += f"\n{'----'*(self.n_cols)}" + '-'
+        return board_repr
 
     def _getState(self):
         return (self._getHash(), self.getEmptySpaces(), self.curTurn)
@@ -120,8 +125,29 @@ class TicTacToe:
             return self._getState(), -10, True
         self._makeMove(self.curTurn, action[0], action[1])
         reward = self._isTerminal()
-        self.curTurn = -self.curTurn
+        self._change_turn()
         return self._getState(), 0 if reward is None else reward, reward is not None
+
+    def from_hash(self, hash_str: str) -> "TicTacToe":
+        board = np.zeros((self.n_rows, self.n_cols), dtype=self.board.dtype)
+        free = hash_str.count('1')
+        number_of_steps = len(hash_str) - free
+
+        new_env = self.clone()
+        for i in range(self.n_rows):
+            for j in range(self.n_cols):
+                token = int(hash_str[i * self.n_cols + j])
+                board[i, j] = token - 1
+
+        new_env.board = board
+
+        for _ in range(number_of_steps):
+            new_env._change_turn()
+
+        return new_env
+
+    def __str__(self) -> str:
+        return self._str_repr(self.board)
 
     def reset(self):
         self.board = np.zeros((self.n_rows, self.n_cols), dtype=np.int8)
