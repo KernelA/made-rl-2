@@ -1,4 +1,3 @@
-import copy
 import enum
 from typing import Optional
 
@@ -52,23 +51,25 @@ def get_empty_space(board: np.ndarray) -> np.ndarray:
 
 
 class TicTacToe:
-    def __init__(self, n_rows: int, n_cols: int, n_win: int, clone: Optional["TicTacToe"] = None):
-        if clone is not None:
-            self.n_rows, self.n_cols, self.n_win = clone.n_rows, clone.n_cols, clone.n_win
-            self.board = clone.board.copy()
-            self.curTurn = clone.curTurn
-            self.emptySpaces = None
-            self.boardHash = None
-        else:
-            self.n_rows = n_rows
-            self.n_cols = n_cols
-            self.n_win = n_win
+    def __init__(self, n_rows: int, n_cols: int, n_win: int, start_player: int = 1):
+        assert start_player in (-1, 1), "A player mus be in -1 (circle) or 1 (cross)"
+        self.n_rows = n_rows
+        self.n_cols = n_cols
+        self.n_win = n_win
+        self._start_player = start_player
+        self.reset()
 
-            self.reset()
+    def __deepcopy__(self) -> "TicTacToe":
+        new_env = TicTacToe(self.n_rows, self.n_cols, self.n_win, self._start_player)
+        new_env.board = self.board.copy()
+        new_env.curTurn = self.curTurn
+        new_env.emptySpaces = None
+        new_env.boardHash = None
+
+        return new_env
 
     def clone(self) -> "TicTacToe":
-        new_env = TicTacToe(self.n_rows, self.n_cols, self.n_win, self)
-        return new_env
+        return self.__deepcopy__()
 
     def getEmptySpaces(self) -> np.ndarray:
         if self.emptySpaces is None:
@@ -82,42 +83,13 @@ class TicTacToe:
 
     def _getHash(self):
         if self.boardHash is None:
-            self.boardHash = ''.join([f"{x + 1}"
-                                     for x in self.board.reshape(self.n_rows * self.n_cols)])
+            self.boardHash = ''.join(
+                f"{x + 1}" for x in self.board.reshape(self.n_rows * self.n_cols))
         return self.boardHash
 
     def _isTerminal(self):
         # проверим, не закончилась ли игра
         return is_terminal(self.board, self.curTurn, self.n_win)
-        # cur_marks, cur_p = np.where(self.board == self.curTurn), self.curTurn
-
-        # for i, j in zip(cur_marks[0], cur_marks[1]):
-        #     win = False
-        #     if i <= self.n_rows - self.n_win:
-        #         if np.all(self.board[i:i+self.n_win, j] == cur_p):
-        #             win = True
-        #     if not win:
-        #         if j <= self.n_cols - self.n_win:
-        #             if np.all(self.board[i, j:j+self.n_win] == cur_p):
-        #                 win = True
-        #     if not win:
-        #         if i <= self.n_rows - self.n_win and j <= self.n_cols - self.n_win:
-        #             if np.all(np.array([self.board[i+k, j+k] == cur_p for k in range(self.n_win)])):
-        #                 win = True
-        #     if not win:
-        #         if i <= self.n_rows - self.n_win and j >= self.n_win-1:
-        #             if np.all(np.array([self.board[i+k, j-k] == cur_p for k in range(self.n_win)])):
-        #                 win = True
-        #     if win:
-        #         self.gameOver = True
-        #         return self.curTurn
-
-        # if len(self.getEmptySpaces()) == 0:
-        #     self.gameOver = True
-        #     return 0
-
-        # self.gameOver = False
-        # return None
 
     def printBoard(self):
         for i in range(self.n_rows):
@@ -158,4 +130,4 @@ class TicTacToe:
         self.boardHash = None
         self.gameOver = False
         self.emptySpaces = None
-        self.curTurn = 1
+        self.curTurn = self._start_player
