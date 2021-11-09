@@ -1,0 +1,24 @@
+schema: '2.0'
+stages:
+  precompute-tree@1:
+    cmd: python ./precompute_tree.py -n 3 --start_player circle --out_dir ./trees/3/circle
+    deps:
+    - path: ./precompute_tree.py
+      md5: 58271c7a8a337815b12cb8f747771f8f
+      size: 1116
+    outs:
+    - path: ./trees/3/circle
+      md5: ad71538135c61217b24c1ee4fee76cc9.dir
+      size: 122853409
+      nfiles: 1
+  precompute-tree@0:
+    cmd: python ./precompute_tree.py -n 3 --start_player cross --out_dir ./trees/3/cross
+    deps:
+    - path: ./precompute_tree.py
+      md5: 58271c7a8a337815b12cb8f747771f8f
+      size: 1116
+    outs:
+    - path: ./trees/3/cross
+      md5: bf8ef96aa6645a4309372e387dff7c1c.dir
+      size: 122693601
+      nfiles: 1

@@ -4,6 +4,8 @@ import pickle
 import random
 
 from anytree import Node
+from tqdm import tnrange, tqdm
+from tqdm.std import trange
 
 from .env import TicTacToe
 from .contstants import PICKLE_PROTOCOL
@@ -11,10 +13,11 @@ from .contstants import PICKLE_PROTOCOL
 StepType = Tuple[int]
 
 
-def r_build_minmax_tree(tic_tac_env: TicTacToe, parent_node: Node, hash_table: dict):
+def r_build_minmax_tree(tic_tac_env: TicTacToe, parent_node: Node, hash_table: dict, progress):
     positions = tic_tac_env.getEmptySpaces()
 
     for pos in positions:
+        progress.update()
         new_env = tic_tac_env.clone()
         node_name, reward, is_end = new_env.step(pos)
         node = Node(node_name[0], parent=parent_node, reward=reward, step=tuple(pos))
@@ -22,7 +25,7 @@ def r_build_minmax_tree(tic_tac_env: TicTacToe, parent_node: Node, hash_table: d
         hash_table[path] = node
 
         if not is_end:
-            r_build_minmax_tree(new_env, node, hash_table)
+            r_build_minmax_tree(new_env, node, hash_table, progress)
 
 
 class MinMaxTree:
@@ -37,7 +40,18 @@ class MinMaxTree:
     @staticmethod
     def build_from_env(tic_tac_env: TicTacToe, generator: Optional[random.Random] = None) -> "MinMaxTree":
         tree = MinMaxTree(generator)
-        r_build_minmax_tree(tic_tac_env, tree.root, tree.node_hash_table)
+        tic_tac_env.reset()
+        total_cells = tic_tac_env.n_cols * tic_tac_env.n_rows
+        total_nodes = total_cells
+        prev_levels = total_cells
+
+        for tree_level in range(2, total_cells + 1):
+            node_at_level = (total_cells - tree_level + 1) * prev_levels
+            total_nodes += node_at_level
+            prev_levels = node_at_level
+
+        progress = trange(total_nodes, miniters=10_000)
+        r_build_minmax_tree(tic_tac_env, tree.root, tree.node_hash_table, progress)
 
         return tree
 
@@ -45,7 +59,7 @@ class MinMaxTree:
         with open(path_to_file, "wb") as dump_file:
             pickle.dump(self, dump_file, protocol=PICKLE_PROTOCOL)
 
-    @staticmethod
+    @ staticmethod
     def load_from_dump(path_to_file: str) -> "MinMaxTree":
         with open(path_to_file, "rb") as dump_file:
             return pickle.load(dump_file)
