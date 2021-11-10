@@ -3,8 +3,9 @@ import os
 import logging
 import sys
 
-from tictac_rl import TicTacToe, MinMaxTree
 import log_set
+from tictac_rl import TicTacToe, MinMaxTree
+from tictac_rl.env.tictac import StartPlayer
 
 sys.setrecursionlimit(sys.getrecursionlimit() * 20)
 
@@ -13,10 +14,10 @@ def main(args):
     os.makedirs(args.out_dir, exist_ok=True)
     logger = logging.getLogger()
 
-    start_player = 1
+    start_player = StartPlayer.cross
 
     if args.start_player == "circle":
-        start_player = -1
+        start_player = StartPlayer.circle
 
     env = TicTacToe(args.n, args.n, args.n, start_player)
 

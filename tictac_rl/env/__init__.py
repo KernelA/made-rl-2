@@ -1,1 +1,1 @@
-from .tictac import TicTacToe, Action
+from .tictac import TicTacToe, StartPlayer, Winner

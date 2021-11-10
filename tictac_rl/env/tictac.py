@@ -5,13 +5,21 @@ from numba import jit
 import numpy as np
 
 
-class Action(enum.IntEnum):
+@enum.unique
+class StartPlayer(enum.IntEnum):
     circle = -1
     cross = 1
 
 
+@enum.unique
+class Winner(enum.IntEnum):
+    circle = StartPlayer.circle
+    cross = StartPlayer.cross
+    draw = 0
+
+
 @jit(nopython=True, parallel=True)
-def is_terminal(board: np.ndarray, current_turn: int, n_win: int) -> Optional[int]:
+def is_terminal(board: np.ndarray, current_turn: StartPlayer, n_win: int) -> Optional[Winner]:
     # проверим, не закончилась ли игра
     cur_marks, cur_p = np.where(board == current_turn), current_turn
 
@@ -39,7 +47,7 @@ def is_terminal(board: np.ndarray, current_turn: int, n_win: int) -> Optional[in
             return current_turn
 
     if len(get_empty_space(board)) == 0:
-        return 0
+        return Winner.draw
 
     return None
 
@@ -51,8 +59,9 @@ def get_empty_space(board: np.ndarray) -> np.ndarray:
 
 
 class TicTacToe:
-    def __init__(self, n_rows: int, n_cols: int, n_win: int, start_player: int = 1):
-        assert start_player in (-1, 1), "A player mus be in -1 (circle) or 1 (cross)"
+    def __init__(self, n_rows: int, n_cols: int, n_win: int, start_player: StartPlayer = StartPlayer.cross):
+        assert start_player in (
+            StartPlayer.circle, StartPlayer.cross), "A player mus be in -1 (circle) or 1 (cross)"
         self.n_rows = n_rows
         self.n_cols = n_cols
         self.n_win = n_win
@@ -90,7 +99,7 @@ class TicTacToe:
                 f"{x + 1}" for x in self.board.reshape(self.n_rows * self.n_cols))
         return self.boardHash
 
-    def _isTerminal(self):
+    def isTerminal(self):
         # проверим, не закончилась ли игра
         return is_terminal(self.board, self.curTurn, self.n_win)
 
@@ -111,7 +120,7 @@ class TicTacToe:
         board_repr += f"\n{'----'*(self.n_cols)}" + '-'
         return board_repr
 
-    def _getState(self):
+    def getState(self):
         return (self._getHash(), self.getEmptySpaces(), self.curTurn)
 
     def action_from_int(self, action_int):
@@ -122,27 +131,15 @@ class TicTacToe:
 
     def step(self, action):
         if self.board[action[0], action[1]] != 0:
-            return self._getState(), -10, True
+            return self.getState(), -10, True
         self._makeMove(self.curTurn, action[0], action[1])
-        reward = self._isTerminal()
+        reward = self.isTerminal()
         self._change_turn()
-        return self._getState(), 0 if reward is None else reward, reward is not None
+        return self.getState(), 0 if reward is None else reward, reward is not None
 
-    def from_hash(self, hash_str: str) -> "TicTacToe":
-        board = np.zeros((self.n_rows, self.n_cols), dtype=self.board.dtype)
-        free = hash_str.count('1')
-        number_of_steps = len(hash_str) - free
-
+    def from_state_str(self, state_str: str) -> "TicTacToe":
         new_env = self.clone()
-        for i in range(self.n_rows):
-            for j in range(self.n_cols):
-                token = int(hash_str[i * self.n_cols + j])
-                board[i, j] = token - 1
-
-        new_env.board = board
-
-        for _ in range(number_of_steps):
-            new_env._change_turn()
+        new_env.board = np.array(tuple(map(int, state_str)), dtype=self.board.dtype) - 1
 
         return new_env
 
@@ -156,4 +153,4 @@ class TicTacToe:
         self.boardHash = None
         self.gameOver = False
         self.emptySpaces = None
-        self.curTurn = self._start_player
+        self.curTurn = int(self._start_player)

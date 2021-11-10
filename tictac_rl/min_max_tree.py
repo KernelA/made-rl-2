@@ -4,13 +4,22 @@ import pickle
 import random
 
 from anytree import Node
-from tqdm import tnrange, tqdm
+from anytree.node.nodemixin import NodeMixin
 from tqdm.std import trange
 
 from .env import TicTacToe
 from .contstants import PICKLE_PROTOCOL
 
 StepType = Tuple[int]
+
+
+def nodename2hash_key(node: NodeMixin):
+    return node.separator.join([""] + [str(node_path.name) for node_path in node.path])
+
+
+def nodepath(root_node: NodeMixin, game_history: Iterable[str]):
+    return f"{root_node.separator}{root_node.name}{root_node.separator}" + \
+        f"{root_node.separator}".join(game_history)
 
 
 def compute_total_nodes(total_cells: int, start_level: int, end_level: int):
@@ -35,8 +44,9 @@ def r_build_minmax_tree(tic_tac_env: TicTacToe, parent_node: Node, hash_table: d
         progress.update()
         new_env = tic_tac_env.clone()
         node_name, reward, is_end = new_env.step(pos)
-        node = Node(node_name[0], parent=parent_node, reward=reward, step=tuple(pos))
-        path = node.separator.join([""] + [str(node_path.name) for node_path in node.path])
+        node = Node(node_name[0], parent=parent_node, reward=reward *
+                    int(new_env._start_player), step=tuple(pos))
+        path = nodename2hash_key(node)
         hash_table[path] = node
 
         if not is_end:
@@ -120,8 +130,7 @@ class MinMaxTree:
         return best_score, best_step
 
     def get_node_by_step_history(self, node_history: Iterable[str]) -> Node:
-        node_path = f"{self.root.separator}{self.root.name}{self.root.separator}" + \
-            f"{self.root.separator}".join(node_history)
+        node_path = nodepath(self.root, node_history)
         return self.node_hash_table[node_path]
 
     def best_move(self, node_history: Iterable[str], is_max: bool) -> StepType:
