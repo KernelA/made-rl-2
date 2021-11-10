@@ -52,11 +52,12 @@ jobs:
           DVC_SECRET_FILE: ${{ secrets.DVC_SECRET_FILE }}
         run: |
           cat << EOF > ./.dvc/config.local
-          ['remote "storage"']
+          ['remote "data"']
             gdrive_service_account_json_file_path = ${{ github.workspace }}/${DVC_SECRET_FILE}
           EOF
 
-          dvc pull precompute-tree
+          dvc pull precompute-tree@1
+          dvc pull precompute-tree@0
 
       - name: Test with pytest
         run: pytest ./tests

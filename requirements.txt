@@ -4,5 +4,3 @@ ipykernel
 numpy~=1.21.4
 anytree~=2.8.0
 dvc[gdrive]~=2.8
--f https://download.pytorch.org/whl/lts/1.8/torch_lts.html
-torch==1.8.2+cu111
