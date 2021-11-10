@@ -1,0 +1,63 @@
+name: Test main code
+
+on:
+  push:
+    branches: [master, develop]
+    paths:
+      - '**.py'
+      - requirements*.txt
+      - dvc.yaml
+      - dvc.lock
+  pull_request:
+    branches: [master, develop]
+    paths:
+      - '**.py'
+      - requirements*.txt
+      - dvc.yaml
+      - dvc.lock
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Cache pip dependecies
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/pip
+            ${{ github.workspace }}/.dvc/cache
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements*txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            ${{ runner.os }}-
+
+      - name: Install dependencies
+        run: |
+          pip install wheel
+          pip install -r requirements.txt -r requirements.dev.txt
+
+
+      - name: Prepare DVC cache
+        env:
+          GDRIVE_CREDENTIALS_DATA: ${{ secrets.DVC_DATA_SECRET }}
+          DVC_SECRET_FILE: ${{ secrets.DVC_SECRET_FILE }}
+        run: |
+          cat << EOF > ./.dvc/config.local
+          ['remote "storage"']
+            gdrive_service_account_json_file_path = ${{ github.workspace }}/${DVC_SECRET_FILE}
+          EOF
+
+          dvc pull precompute-tree
+
+      - name: Test with pytest
+        run: pytest ./tests
+      
