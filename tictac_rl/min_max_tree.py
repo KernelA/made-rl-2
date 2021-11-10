@@ -13,7 +13,22 @@ from .contstants import PICKLE_PROTOCOL
 StepType = Tuple[int]
 
 
+def compute_total_nodes(total_cells: int, start_level: int, end_level: int):
+    assert start_level > 0
+    assert start_level <= end_level
+    node_at_prev_levels = 1
+    total_nodes = node_at_prev_levels
+
+    for level in range(start_level, end_level + 1):
+        node_at_level = (total_cells - level + 1) * node_at_prev_levels
+        total_nodes += node_at_level
+        node_at_prev_levels = node_at_level
+
+    return total_nodes
+
+
 def r_build_minmax_tree(tic_tac_env: TicTacToe, parent_node: Node, hash_table: dict, progress):
+    total_cells = tic_tac_env.n_cols * tic_tac_env.n_rows
     positions = tic_tac_env.getEmptySpaces()
 
     for pos in positions:
@@ -26,6 +41,8 @@ def r_build_minmax_tree(tic_tac_env: TicTacToe, parent_node: Node, hash_table: d
 
         if not is_end:
             r_build_minmax_tree(new_env, node, hash_table, progress)
+        elif node.depth != total_cells:
+            progress.update(compute_total_nodes(total_cells, node.depth + 1, total_cells))
 
 
 class MinMaxTree:
@@ -42,13 +59,8 @@ class MinMaxTree:
         tree = MinMaxTree(generator)
         tic_tac_env.reset()
         total_cells = tic_tac_env.n_cols * tic_tac_env.n_rows
-        total_nodes = total_cells
-        prev_levels = total_cells
 
-        for tree_level in range(2, total_cells + 1):
-            node_at_level = (total_cells - tree_level + 1) * prev_levels
-            total_nodes += node_at_level
-            prev_levels = node_at_level
+        total_nodes = compute_total_nodes(total_cells, 1, total_cells)
 
         progress = trange(total_nodes, miniters=10_000)
         r_build_minmax_tree(tic_tac_env, tree.root, tree.node_hash_table, progress)

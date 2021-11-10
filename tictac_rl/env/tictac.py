@@ -47,7 +47,7 @@ def is_terminal(board: np.ndarray, current_turn: int, n_win: int) -> Optional[in
 @jit(nopython=True)
 def get_empty_space(board: np.ndarray) -> np.ndarray:
     res = np.where(board == 0)
-    return np.vstack(res).T
+    return np.vstack(res).astype(np.uint16).T
 
 
 class TicTacToe:
