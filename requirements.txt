@@ -1,6 +1,7 @@
 tzlocal
 pyyaml
 ipykernel
-numpy~=1.21.4
+numpy~=1.20.0
 anytree~=2.8.0
 dvc[gdrive]~=2.8
+numba~=0.54.1
