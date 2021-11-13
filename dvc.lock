@@ -22,3 +22,14 @@ stages:
       md5: ab803245b46a6fa3efc71cad67dda394.dir
       size: 116094313
       nfiles: 1
+  precompute-tree:
+    cmd: python ./precompute_tree.py -n 3 --start_player cross --out_dir ./trees/3/cross
+    deps:
+    - path: ./precompute_tree.py
+      md5: de55971f3381582cec4b31ea6891f310
+      size: 1125
+    outs:
+    - path: ./trees/3/cross
+      md5: cc2a0ece3fc9bf1c6195a0f90bf8ecfb.dir
+      size: 62450851
+      nfiles: 1

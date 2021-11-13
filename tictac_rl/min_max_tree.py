@@ -9,8 +9,7 @@ from tqdm.std import trange
 
 from .env import TicTacToe
 from .contstants import PICKLE_PROTOCOL
-
-StepType = Tuple[int]
+from .base_tree import GameTreeBase, StepType
 
 
 def nodename2hash_key(node: NodeMixin):
@@ -36,7 +35,7 @@ def compute_total_nodes(total_cells: int, start_level: int, end_level: int):
     return total_nodes
 
 
-def r_build_minmax_tree(tic_tac_env: TicTacToe, parent_node: Node, hash_table: dict, progress):
+def r_build_minmax_tree(tic_tac_env: TicTacToe, parent_node: Node, progress):
     total_cells = tic_tac_env.n_cols * tic_tac_env.n_rows
     positions = tic_tac_env.getEmptySpaces()
 
@@ -46,36 +45,29 @@ def r_build_minmax_tree(tic_tac_env: TicTacToe, parent_node: Node, hash_table: d
         node_name, reward, is_end = new_env.step(pos)
         node = Node(node_name[0], parent=parent_node, reward=reward *
                     int(new_env._start_player), step=tuple(pos))
-        path = nodename2hash_key(node)
-        hash_table[path] = node
 
         if not is_end:
-            r_build_minmax_tree(new_env, node, hash_table, progress)
+            r_build_minmax_tree(new_env, node, progress)
         elif node.depth != total_cells:
             progress.update(compute_total_nodes(total_cells, node.depth + 1, total_cells))
 
 
-class MinMaxTree:
+class MinMaxTree(GameTreeBase):
     def __init__(self, generator: Optional[random.Random] = None):
         if generator is None:
             generator = random.Random()
 
         self.root = Node("empty", reward=0)
-        self.node_hash_table = dict()
         self._generator = generator
 
-    @staticmethod
-    def build_from_env(tic_tac_env: TicTacToe, generator: Optional[random.Random] = None) -> "MinMaxTree":
-        tree = MinMaxTree(generator)
+    def build_from_env(self, tic_tac_env: TicTacToe):
         tic_tac_env.reset()
         total_cells = tic_tac_env.n_cols * tic_tac_env.n_rows
 
         total_nodes = compute_total_nodes(total_cells, 1, total_cells)
 
         progress = trange(total_nodes, miniters=10_000)
-        r_build_minmax_tree(tic_tac_env, tree.root, tree.node_hash_table, progress)
-
-        return tree
+        r_build_minmax_tree(tic_tac_env, self.root, progress)
 
     def dump(self, path_to_file: str) -> None:
         with open(path_to_file, "wb") as dump_file:
@@ -86,9 +78,9 @@ class MinMaxTree:
         with open(path_to_file, "rb") as dump_file:
             return pickle.load(dump_file)
 
-    def _minmax_tt(self, node: Node, alpha: Optional[float], beta: Optional[float], is_max: bool) -> Tuple[int, StepType]:
+    def _minmax_tt(self, node: Node, alpha: Optional[float], beta: Optional[float], is_max: bool) -> Tuple[int, Node]:
         if node.is_leaf:
-            return node.reward, node.step
+            return node.reward, node
 
         max_func = lt
 
@@ -98,7 +90,7 @@ class MinMaxTree:
         children_iter = iter(node.children)
 
         first_node = next(children_iter)
-        best_step = first_node.step
+        best_node = first_node
         best_score, _ = self._minmax_tt(first_node, alpha, beta, not is_max)
 
         if is_max:
@@ -111,28 +103,29 @@ class MinMaxTree:
 
             if max_func(score, best_score):
                 best_score = score
-                best_step = child_node.step
+                best_node = child_node
             elif score == best_score:
                 if self._generator.random() < 0.5:
                     best_score = score
-                    best_step = child_node.step
+                    best_node = child_node
 
             if is_max:
                 if beta is not None and best_score > beta:
                     break
-
                 alpha = max(alpha, best_score)
             else:
                 if alpha is not None and best_score < alpha:
                     break
                 beta = min(beta, best_score)
 
-        return best_score, best_step
+        return best_score, best_node
 
-    def get_node_by_step_history(self, node_history: Iterable[str]) -> Node:
-        node_path = nodepath(self.root, node_history)
-        return self.node_hash_table[node_path]
+    def find_game_state(self, prev_state: Node, env_state: str):
+        for node in prev_state.children:
+            if node.name == env_state:
+                return node
+        raise RuntimeError(f"Cannot find state from root node: {prev_state.name}")
 
-    def best_move(self, node_history: Iterable[str], is_max: bool) -> StepType:
-        node = self.get_node_by_step_history(node_history)
-        return self._minmax_tt(node, None, None, is_max)[1]
+    def best_move(self, current_state: Node, env: TicTacToe, is_max: bool) -> Tuple[StepType, Node]:
+        _, best_node = self._minmax_tt(current_state, None, None, is_max)
+        return best_node.step, best_node
