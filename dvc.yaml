@@ -1,13 +1,7 @@
 stages:
   precompute-tree:
-    foreach:
-      - n: 3
-        start: cross
-      - n: 3
-        start: circle
-    do:
-      cmd: python ./precompute_tree.py -n ${item.n} --start_player ${item.start} --out_dir ./trees/${item.n}/${item.start}
-      deps:
-        - ./precompute_tree.py
-      outs:
-        - ./trees/${item.n}/${item.start}
+    cmd: python ./precompute_tree.py -n 3 --start_player cross --out_dir ./trees/3/cross
+    deps:
+      - ./precompute_tree.py
+    outs:
+      - ./trees/3/cross

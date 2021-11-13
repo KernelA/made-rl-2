@@ -1,24 +1,35 @@
+from logging import root
 import math
 from typing import Optional, Sequence, Tuple
 import random
 
-from anytree import NodeMixin, node
+from anytree import NodeMixin
 
 
-from .env import TicTacToe, StartPlayer, Winner
-from .min_max_tree import StepType, nodename2hash_key, nodepath
+from .env import TicTacToe, CROSS_PLAYER, CIRCLE_PLAYER, DRAW
+from .min_max_tree import StepType
 
 
 class MCTSNode(NodeMixin):
     CONSTANT = math.sqrt(2)
 
-    def __init__(self, name, step: Tuple[int], generator: random.Random = None, parent: Optional["MCTSNode"] = None, children=None) -> None:
+    def __init__(self, *,
+                 name: str,
+                 step: Tuple[int],
+                 is_terminal: bool,
+                 reward: Optional[int],
+                 generator: random.Random = None,
+                 parent: Optional["MCTSNode"] = None,
+                 children=None) -> None:
         super().__init__()
         self.name = name
         self.parent = parent
         self.step = step
         self.num_visits = 0
         self._num_wins = 0
+        self.is_terminal = is_terminal
+        self.reward = reward
+        self._child_table = dict()
 
         if generator is None:
             generator = random.Random()
@@ -28,6 +39,23 @@ class MCTSNode(NodeMixin):
         if children:
             self.children = children
 
+    def __str__(self):
+        str_repr = f"{self.name} {self._num_wins}/{self.num_visits}"
+        if self.is_terminal:
+            str_repr += f"Winner: {self.reward}"
+        return str_repr
+
+    def _post_attach_children(self, children):
+        super()._post_attach_children(children)
+        for node in self.children:
+            self._child_table[node.name] = node
+
+    def _post_attach(self, parent):
+        parent._post_attach_children(parent.children)
+
+    def get_child_node(self, name: str) -> Optional["MCTSNode"]:
+        return self._child_table.get(name, None)
+
     def get_ucb1(self, start_node_name: str) -> float:
         if self.num_visits == 0:
             return math.inf
@@ -35,86 +63,139 @@ class MCTSNode(NodeMixin):
         parent_node = self.parent
         total_simulations = 0
 
-        while parent_node is not None and parent_node.name != start_node_name:
+        while parent_node.name != start_node_name:
             total_simulations += parent_node.num_visits
             parent_node = parent_node.parent
 
+        total_simulations += parent_node.num_visits
+
         return self._num_wins / self.num_visits + self.CONSTANT * math.sqrt(math.log(total_simulations) / self.num_visits)
+
+    def get_value(self):
+        if self.num_visits == 0:
+            return 0
+        return self._num_wins / self.num_visits
 
 
 class MCTS:
     def __init__(self, generator: Optional[random.Random] = None):
         if generator is None:
             generator = random.Random()
-        self.generator = generator
-        self.root = MCTSNode("empty", None, self.generator)
-        self._hash_table = dict()
+        self._generator = generator
+        self.root = MCTSNode(name="empty", step=None, is_terminal=False,
+                             reward=None, generator=self._generator)
 
-    def _selection(self, env: TicTacToe, game_history: Sequence[str]) -> StepType:
-        node_hash = nodepath(self.root, game_history)
+    def add_node(self, prev_node: "MCTSNode", env_state: str, env: TicTacToe) -> "MCTSNode":
+        new_node = prev_node.get_child_node(env_state)
 
-        root_node = self._hash_table.get(node_hash, None)
+        if new_node is None:
+            new_env = env.from_state_str(prev_node.name)
+            for pos in new_env.getEmptySpaces():
+                cur_env = new_env.clone()
+                (board_state, *_), reward, is_end = cur_env.step(pos)
+                new_state_node = MCTSNode(name=board_state, step=pos,
+                                          is_terminal=is_end, reward=reward, parent=prev_node)
+                if board_state == env_state:
+                    new_node_start = new_state_node
+        else:
+            new_node_start = new_node
+
+        assert new_node_start is not None
+
+        return new_node_start
+
+    def _find_best_child(self, children, root_name: str, func):
+        ucb_1 = tuple(func(child, root_name) for child in children)
+        max_value = max(ucb_1)
+
+        best_children = [children[i] for i in range(len(ucb_1)) if ucb_1[i] == max_value]
+        return self._generator.choice(best_children)
+
+    def _selection(self, env: TicTacToe, root_node: "MCTSNode", is_max: bool) -> Tuple[StepType, MCTSNode]:
+        root_node = root_node
         l_node = root_node
 
-        if root_node is not None:
-            while not l_node.is_leaf:
-                l_node = max(l_node.children, key=lambda x: x.get_ucb1(root_node.name))
+        if l_node is self.root:
+            is_max = False
+
+        while not l_node.is_leaf:
+            is_max = not is_max
+            l_node = self._find_best_child(
+                l_node.children, root_node.name, lambda loc_node, root_name: loc_node.get_ucb1(root_name))
+
+        if not l_node.is_terminal:
+            self._expansion(env, root_node, l_node, is_max)
         else:
-            root_node = self.root
-            l_node = root_node
+            self._backpropogation(env._start_player, l_node.reward, l_node, root_node, is_max)
 
-        self._expansion(env, root_node, l_node)
+        best_move = self._find_best_child(
+            root_node.children, root_node.name, lambda loc_node, root_name: loc_node.get_value())
 
-        best_move = max(l_node.children, key=lambda x: x.get_ucb1(root_node.name))
+        return best_move.step, best_move
 
-        return best_move.step
+    def best_move(self, env: TicTacToe, game_state_node: MCTSNode, is_max: bool) -> Tuple[StepType, MCTSNode]:
+        return self._selection(env, game_state_node, is_max)
 
-    def _expansion(self, env: TicTacToe, root_node: "MCTSNode", l_node: "MCTSNode"):
-        new_env = env.from_state_str(l_node.name)
-        reward = new_env.isTerminal()
-
-        if reward is not None:
-            self._backpropogation(env.curTurn, reward, l_node, root_node)
+    def _expansion(self, env: TicTacToe, root_node: "MCTSNode", l_node: "MCTSNode", is_max: bool):
+        if l_node is root_node:
+            new_env = env.clone()
+        else:
+            new_env = env.from_state_str(l_node.name)
 
         for pos in new_env.getEmptySpaces():
             curr_env = new_env.clone()
             state, reward, is_end = curr_env.step(pos)
-            node = MCTSNode(state[0], pos, self._generator, parent=l_node)
-            self._hash_table[nodename2hash_key(node)] = node
+            node = MCTSNode(name=state[0], step=pos, reward=reward,
+                            is_terminal=is_end, generator=self._generator, parent=l_node)
 
-        c_node = self._generator.choice(l_node.children)
-        winner = self._simulation(c_node, env)
-        self._backpropogation(env.curTurn, winner, c_node, root_node)
+        c_node = self._choose_node(l_node.children)
 
-    def _simulation(self, c_node: "MCTSNode", env: TicTacToe) -> Winner:
-        new_env = env.from_state_str(c_node)
-        free_space = new_env.getEmptySpaces()
+        if c_node.is_terminal:
+            winner = c_node.reward
+        else:
+            winner = self._simulation(env.from_state_str(c_node.name))
+        self._backpropogation(env.curTurn, winner, c_node, root_node, not is_max)
+
+    def _choose_node(self, nodes: Sequence["MCTSNode"]) -> "MCTSNode":
+        return self._generator.choice(nodes)
+
+    def _make_move(self, env: TicTacToe, free_space) -> Tuple[int]:
+        return self._generator.choice(free_space)
+
+    def _simulation(self, env: TicTacToe) -> int:
+        free_space = env.getEmptySpaces()
         is_end = False
 
         while not is_end:
-            pos = self._generator.choice(free_space)
-            state, reward, is_end = new_env.step(pos)
+            pos = self._make_move(env, free_space)
+            state, reward, is_end = env.step(pos)
             free_space = state[1]
 
         return reward
 
-    def _backpropogation(self, start_player: StartPlayer, winner: StartPlayer, c_node: "MCTSNode", root_node: "MCTSNode"):
+    def _backpropogation(self, start_player: int,
+                         winner: int,
+                         c_node: "MCTSNode",
+                         root_node: "MCTSNode",
+                         is_max: bool):
         c_node.num_visits += 1
-        is_win = False
 
-        if start_player == winner or winner == Winner.draw:
-            c_node._num_wins += 1
-            is_win = True
+        win_count = 1 if (start_player == winner or winner == DRAW) and is_max else 0
+        c_node._num_wins += win_count
 
+        is_max = not is_max
         parent_node: MCTSNode = c_node.parent
 
         while parent_node.name != root_node.name:
-            is_win = not is_win
             parent_node.num_visits += 1
 
-            if is_win:
-                parent_node._num_wins += 1
+            if is_max:
+                parent_node._num_wins += win_count
 
-        parent_node
-        if is_win:
-            parent_node._num_wins += 1
+            is_max = not is_max
+            parent_node = parent_node.parent
+
+        parent_node.num_visits += 1
+
+        if is_max:
+            parent_node._num_wins += win_count

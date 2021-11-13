@@ -4,16 +4,16 @@ import itertools
 import pytest
 
 from tictac_rl import TicTacToe
-from tictac_rl.env.tictac import StartPlayer
+from tictac_rl.env.tictac import CIRCLE_PLAYER, CROSS_PLAYER
 
 
-@pytest.mark.parametrize("start_player", [StartPlayer.circle, StartPlayer.cross])
+@pytest.mark.parametrize("start_player", [CIRCLE_PLAYER, CROSS_PLAYER])
 def test_recovery(start_player):
     gen = random.Random()
     gen.seed(112)
     env = TicTacToe(3, 3, 3, start_player=start_player)
 
-    for start_x, start_y in itertools.product(range(env.n_rows), range(env.n_cols)):
+    for _, _ in itertools.product(range(env.n_rows), range(env.n_cols)):
         env.reset()
 
         is_end = False
@@ -26,4 +26,5 @@ def test_recovery(start_player):
             new_env = env.from_state_str(state[0])
             assert env._getHash() == new_env._getHash()
             assert env.curTurn == new_env.curTurn
-            free_space = env.getEmptySpaces()
+            assert (env.board == new_env.board).all()
+            free_space = state[1]
