@@ -2,7 +2,7 @@ import pytest
 
 from tictac_rl import TicTacToe, RandomPolicy, TreePolicy, MinMaxTree, MCTS
 
-MINMAX_CROSS = "./trees/3/cross/3_3_3_start_1.pickle"
+MINMAX_CROSS = "./trees/minmax/3/cross/3_3_3_start_1.pickle"
 
 
 @pytest.fixture(scope="session")

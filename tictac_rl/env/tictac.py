@@ -1,4 +1,5 @@
-from typing import Optional, Sequence, Tuple
+from typing import Iterable, Optional, Sequence, Tuple
+import itertools
 
 from numba import jit
 import numpy as np
@@ -91,13 +92,17 @@ class TicTacToe:
     def _change_turn(self):
         self.curTurn = -self.curTurn
 
+    def observation_space_values(self) -> Iterable[str]:
+        for str_repr in itertools.product('012', repeat=self.n_cols * self.n_rows):
+            yield "".join(str_repr)
+
     def _getHash(self):
         if self.boardHash is None:
             self.boardHash = ''.join(
                 f"{x + 1}" for x in self.board.reshape(self.n_rows * self.n_cols))
         return self.boardHash
 
-    def isTerminal(self) -> bool:
+    def isTerminal(self) -> Optional[int]:
         # проверим, не закончилась ли игра
         return is_terminal(self.board, self.curTurn, self.n_win)
 
@@ -125,7 +130,7 @@ class TicTacToe:
         return (int(action_int / self.n_cols), int(action_int % self.n_cols))
 
     def int_from_action(self, action: ActionType) -> int:
-        return action[0] * self.n_cols + action[1]
+        return int(action[0] * self.n_cols + action[1])
 
     def step(self, action: ActionType) -> GameState:
         if self.board[action[0], action[1]] != 0:

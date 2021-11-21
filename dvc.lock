@@ -26,47 +26,74 @@ stages:
     cmd: python ./precompute_tree.py
     deps:
     - path: ./configs/minmax_precompute.yaml
-      md5: 33d9feaed790478e7f3c5f14f8fbb5fa
-      size: 121
+      md5: 3a0af9561c281408ba362d73480452ad
+      size: 128
     - path: ./precompute_tree.py
       md5: b81e6a27da4e207f94751c7e914b981a
       size: 760
     outs:
-    - path: ./trees/3/cross
-      md5: a4a50d2c66888f5fe664950468d48ceb.dir
-      size: 62450935
+    - path: ./trees/minmax/3/cross
+      md5: cbcaeb52541e01cc2c22203623314a3b.dir
+      size: 62450929
       nfiles: 1
   precompute-mcts-cross:
-    cmd: python ./precompute_mctc_tree.py -cn mcts_precompute_cross
+    cmd: python ./precompute_mctc_tree.py cross_policy.tree.env=${env}
     deps:
-    - path: ./configs/mcts_precompute_cross.yaml
-      md5: 2634fd95a7f3e55eaf9f03d3dacb16e6
-      size: 344
+    - path: ./configs/mcts_precompute.yaml
+      md5: 21d116c11542150aac99054e974bd996
+      size: 205
     - path: ./precompute_mctc_tree.py
-      md5: fdaa17d9f9d466e73a2ef26ddc63b210
-      size: 1430
+      md5: 8cee4492475daca0c13e812bcb8c4ab0
+      size: 1442
     params:
-      configs/mcts_precompute_cross.yaml:
-        num_simulation: 100
+      configs/mcts_precompute.yaml:
+        num_simulation: 40000
     outs:
-    - path: ./trees/4/cross
-      md5: 6a089c7ff7c5f8685496f6e518e9f8b1.dir
-      size: 17179448
+    - path: ./trees/mcts/4/cross
+      md5: 3cfbf4dc99991d65331d8b8437c28609.dir
+      size: 1623007880
       nfiles: 1
   precompute-mcts-circle:
-    cmd: python ./precompute_mctc_tree.py -cn mcts_precompute_circle
+    cmd: python ./precompute_mctc_tree.py out_dir=./trees/mcts/4/circle cross_policy=random
+      circle_policy=mcts_tree circle_policy.tree.env=${env}
     deps:
-    - path: ./configs/mcts_precompute_circle.yaml
-      md5: 74f18520979d7c268cbb8303ec86329c
-      size: 345
+    - path: ./configs/mcts_precompute.yaml
+      md5: 21d116c11542150aac99054e974bd996
+      size: 205
     - path: ./precompute_mctc_tree.py
-      md5: fdaa17d9f9d466e73a2ef26ddc63b210
-      size: 1430
+      md5: 8cee4492475daca0c13e812bcb8c4ab0
+      size: 1442
     params:
-      configs/mcts_precompute_circle.yaml:
-        num_simulation: 100
+      configs/mcts_precompute.yaml:
+        num_simulation: 40000
     outs:
-    - path: ./trees/4/circle
-      md5: 1ca57bc51b19bf86e36f99e934d80c62.dir
-      size: 20236969
+    - path: ./trees/mcts/4/circle
+      md5: 244811abf4e19aaf88893dc2634f195f.dir
+      size: 2861638423
       nfiles: 1
+  precompute-states-cross:
+    cmd: python ./generate_all_states.py start_player=1 state_file=./stat/3/cross_stat.json
+    deps:
+    - path: ./configs/generate_states.yaml
+      md5: f39e23ed4bea242021942e3a196d1fda
+      size: 272
+    - path: ./generate_all_states.py
+      md5: bdce0698e63070a976380a94aaa6b5bb
+      size: 1278
+    outs:
+    - path: ./stat/3/cross_stat.json
+      md5: 479c86ef6f39d9dde2c58b75a55bedde
+      size: 54063
+  precompute-states-circle:
+    cmd: python ./generate_all_states.py start_player=-1 state_file=./stat/3/circle_stat.json
+    deps:
+    - path: ./configs/generate_states.yaml
+      md5: f39e23ed4bea242021942e3a196d1fda
+      size: 272
+    - path: ./generate_all_states.py
+      md5: bdce0698e63070a976380a94aaa6b5bb
+      size: 1278
+    outs:
+    - path: ./stat/3/circle_stat.json
+      md5: 0faf8c63334f2a51f95b8e40632c32cc
+      size: 62196

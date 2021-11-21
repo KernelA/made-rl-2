@@ -11,26 +11,47 @@ stages:
 
   precompute-mcts-cross:
     vars:
-      - ./configs/mcts_precompute_cross.yaml:out_dir
-    cmd: python ./precompute_mctc_tree.py -cn mcts_precompute_cross
+      - ./configs/mcts_precompute.yaml:out_dir
+    cmd: python ./precompute_mctc_tree.py cross_policy.tree.env=\${env}
     deps:
       - ./precompute_mctc_tree.py
-      - ./configs/mcts_precompute_cross.yaml
+      - ./configs/mcts_precompute.yaml
     params:
-      - ./configs/mcts_precompute_cross.yaml:
+      - ./configs/mcts_precompute.yaml:
           - num_simulation
     outs:
       - ${out_dir}
 
   precompute-mcts-circle:
     vars:
-      - ./configs/mcts_precompute_circle.yaml:out_dir
-    cmd: python ./precompute_mctc_tree.py -cn mcts_precompute_circle
+      - out_dir: ./trees/mcts/4/circle 
+    cmd: python ./precompute_mctc_tree.py out_dir=${out_dir} cross_policy=random circle_policy=mcts_tree circle_policy.tree.env=\${env}
     deps:
       - ./precompute_mctc_tree.py
-      - ./configs/mcts_precompute_circle.yaml
+      - ./configs/mcts_precompute.yaml
     params:
-      - ./configs/mcts_precompute_circle.yaml:
+      - ./configs/mcts_precompute.yaml:
           - num_simulation
     outs:
       - ${out_dir}
+
+  precompute-states-cross:
+    vars:
+      - out_path: ./stat/3/cross_stat.json 
+    cmd: python ./generate_all_states.py start_player=1 state_file=${out_path}
+    deps:
+      - ./generate_all_states.py
+      - ./configs/generate_states.yaml
+    outs:
+      - ${out_path}
+  
+  precompute-states-circle:
+    vars:
+      - out_path: ./stat/3/circle_stat.json 
+    cmd: python ./generate_all_states.py start_player=-1 state_file=${out_path}
+    deps:
+      - ./generate_all_states.py
+      - ./configs/generate_states.yaml
+    outs:
+      - ${out_path}
+

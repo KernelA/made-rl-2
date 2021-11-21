@@ -1,0 +1,15 @@
+hydra:
+  run:
+    dir: .
+  output_subdir: null
+
+defaults:
+  - _self_
+  - env: env3x3
+
+start_player: 1
+state_file: ./stat/states_3x3_cross.json
+
+tree:
+  _target_: tictac_rl.base_tree.load_from_dump
+  path_to_file: ./trees/minmax/3/cross/3_3_3_start_1.pickle

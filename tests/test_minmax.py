@@ -20,7 +20,7 @@ def simulate_game(tree: MinMaxTree, start_player: int):
         hashes = [hash_state]
         start_node = tree.find_game_state(tree.root, hash_state)
 
-        while True:
+        while not is_end:
             is_max = not is_max
             move, start_node = tree.best_move(start_node, env, is_max)
             (hash_state, *_), reward, is_end = env.step(move)
@@ -28,7 +28,6 @@ def simulate_game(tree: MinMaxTree, start_player: int):
 
             if is_end:
                 assert reward == 0
-                break
 
 
 @ pytest.mark.parametrize(["start", "file"],

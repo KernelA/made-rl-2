@@ -21,7 +21,7 @@ def main(config):
     cross_policy = hydra.utils.instantiate(config.cross_policy)
     circle_policy = hydra.utils.instantiate(config.circle_policy)
 
-    for _ in tqdm.trange(config.num_simulation):
+    for _ in tqdm.trange(config.num_simulation, miniters=500):
         simulate(env, cross_policy, circle_policy)
 
     path_to_dump = os.path.join(config.out_dir,
@@ -30,14 +30,14 @@ def main(config):
     if isinstance(cross_policy, TreePolicy):
         path_to_dump = os.path.join(
             config.out_dir, f"{env.n_rows}_{env.n_cols}_{env.n_win}_cross_start_{env._start_player}.pickle")
-        cross_policy._tree.dump(path_to_dump)
+        cross_policy.tree.dump(path_to_dump)
 
     del cross_policy
 
     if isinstance(circle_policy, TreePolicy):
         path_to_dump = os.path.join(
             config.out_dir, f"{env.n_rows}_{env.n_cols}_{env.n_win}_circle_start_{env._start_player}.pickle")
-        circle_policy._tree.dump(path_to_dump)
+        circle_policy.tree.dump(path_to_dump)
 
 
 if __name__ == "__main__":

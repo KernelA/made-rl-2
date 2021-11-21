@@ -1,3 +1,0 @@
-_target_: tictac_rl.policies.policy.TreePolicy
-tree: 
-  _target_: tictac_rl.mctc_tree.MCTS

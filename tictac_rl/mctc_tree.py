@@ -78,7 +78,10 @@ class MCTSNode(NodeMixin):
 
 
 class MCTS(GameTreeBase):
-    def __init__(self, env: TicTacToe, generator: Optional[random.Random] = None, eps: float = 0, depth_limit: Optional[int] = None):
+    def __init__(self, env: TicTacToe,
+                 generator: Optional[random.Random] = None,
+                 eps: float = 0,
+                 depth_limit: Optional[int] = None):
         if generator is None:
             generator = random.Random()
         self._generator = generator
@@ -94,6 +97,10 @@ class MCTS(GameTreeBase):
             (board_state, *_), reward, is_end = cur_env.step(pos)
             new_state_node = MCTSNode(name=board_state, step=pos,
                                       is_terminal=is_end, reward=reward, parent=self.root)
+
+    def set_random_proba(self, eps: float):
+        assert 0 <= eps <= 1
+        self._eps = eps
 
     def build_from_env(self, env: TicTacToe):
         raise NotImplementedError()
@@ -112,9 +119,17 @@ class MCTS(GameTreeBase):
             for pos in new_env.getEmptySpaces():
                 cur_env = new_env.clone()
                 (board_state, *_), reward, is_end = cur_env.step(pos)
+
+                parent = prev_node
+
+                if self._depth_limit is not None and prev_node.depth > self._depth_limit:
+                    parent = None
+
                 new_state_node = MCTSNode(name=board_state, step=pos,
-                                          is_terminal=is_end, reward=reward, parent=prev_node)
-                if board_state == env_state:
+                                          is_terminal=is_end, reward=reward, parent=parent)
+
+                if new_state_node.name == env_state:
+                    new_state_node.parent = prev_node
                     new_node_start = new_state_node
         else:
             new_node_start = new_node
@@ -163,6 +178,12 @@ class MCTS(GameTreeBase):
             new_env = env.clone()
         else:
             new_env = env.from_state_str(l_node.name)
+
+        empty_spaces = new_env.getEmptySpaces()
+
+        # Too many nodes. Select subset
+        if self._depth_limit is not None and l_node.depth > self._depth_limit:
+            empty_spaces = empty_spaces[::2]
 
         for pos in new_env.getEmptySpaces():
             curr_env = new_env.clone()

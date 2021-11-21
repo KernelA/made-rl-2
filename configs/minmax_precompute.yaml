@@ -7,4 +7,4 @@ defaults:
   - _self_
   - env: env3x3
 
-out_dir: ./trees/3/cross
+out_dir: ./trees/minmax/3/cross

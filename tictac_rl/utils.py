@@ -1,5 +1,5 @@
 from collections import UserDict
-from typing import Any, Dict, Tuple
+from typing import Dict
 import random
 import sys
 
@@ -15,7 +15,7 @@ class QTableDict(UserDict):
     def __init__(self):
         super().__init__(dict())
 
-    def set_value(self, state: Tuple[Any], action, value: float):
+    def set_value(self, state: str, action: int, value: float):
         if state not in self.data:
             self.data[state] = {action: value}
         else:

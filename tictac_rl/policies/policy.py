@@ -34,23 +34,23 @@ class RandomPolicy(BasePolicy):
 
 class TreePolicy(BasePolicy):
     def __init__(self, tree: GameTreeBase):
-        self._tree = tree
+        self.tree = tree
         self.reset()
 
     def action(self, env: TicTacToe, env_hash: Optional[str]) -> ActionType:
         if env_hash is not None:
-            self._prev_state = self._tree.transit_to_state(self._prev_state, env_hash, env)
+            self._prev_state = self.tree.transit_to_state(self._prev_state, env_hash, env)
 
         is_max_player = True
         if env._start_player != env.curTurn:
             is_max_player = False
 
-        action, self._prev_state = self._tree.best_move(self._prev_state, env, is_max=is_max_player)
+        action, self._prev_state = self.tree.best_move(self._prev_state, env, is_max=is_max_player)
 
         return action
 
     def reset(self):
-        self._prev_state = self._tree.root
+        self._prev_state = self.tree.root
 
 
 class EpsilonGreedyPolicy(BasePolicy):
@@ -62,6 +62,7 @@ class EpsilonGreedyPolicy(BasePolicy):
 
     def action(self, env: TicTacToe, env_hash: Optional[str]) -> ActionType:
         if self._generator.random() < self._epsiolon and env_hash is None:
-            return random.choice(env.getState())
+            return random.choice(env.getEmptySpaces())
         else:
-            return max(self.q_function.get_actions(env_hash).items(), key=lambda x: x[1])[0]
+            action = max(self.q_function.get_actions(env_hash).items(), key=lambda x: x[1])[0]
+            return env.action_from_int(action)

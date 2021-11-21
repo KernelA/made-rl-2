@@ -1,11 +1,16 @@
-from typing import List, Tuple
+from typing import List, Tuple, Callable
+from collections import namedtuple
 
 from .tictac import TicTacToe
 from ..policies import BasePolicy
-from ..env import CROSS_PLAYER
+from ..env import CROSS_PLAYER, ActionType
+
+CallbackInfo = namedtuple(
+    "CallbackInfo", ["old_env_state", "action", "new_state", "reward", "action_player"])
 
 
-def simulate(env: TicTacToe, cross_policy: BasePolicy, circle_policy: BasePolicy, record_history: bool = False) -> int:
+def simulate(env: TicTacToe, cross_policy: BasePolicy, circle_policy: BasePolicy,
+             callback: Callable[[CallbackInfo], None] = None) -> int:
     is_end = False
     env.reset()
     cross_policy.reset()
@@ -19,7 +24,13 @@ def simulate(env: TicTacToe, cross_policy: BasePolicy, circle_policy: BasePolicy
         else:
             step = circle_policy.action(env, state_str)
 
+        old_state = state_str
+        old_turn = env.curTurn
+
         (state_str, _, _), reward, is_end = env.step(step)
+
+        if callback is not None:
+            callback(CallbackInfo(old_state, step, state_str, reward, old_turn))
 
         if is_end:
             return reward

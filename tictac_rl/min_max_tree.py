@@ -70,14 +70,9 @@ class MinMaxTree(GameTreeBase):
         progress = trange(total_nodes, miniters=10_000)
         r_build_minmax_tree(tic_tac_env, self.root, progress)
 
-    def dump(self, path_to_file: str) -> None:
-        with open(path_to_file, "wb") as dump_file:
-            pickle.dump(self, dump_file, protocol=PICKLE_PROTOCOL)
-
-    @ staticmethod
-    def load_from_dump(path_to_file: str) -> "MinMaxTree":
-        with open(path_to_file, "rb") as dump_file:
-            return pickle.load(dump_file)
+    def set_random_proba(self, eps: float):
+        assert 0 <= eps <= 1
+        self._eps = eps
 
     def _minmax_tt(self, node: Node, alpha: Optional[float], beta: Optional[float], is_max: bool) -> Tuple[int, Node]:
         if node.is_leaf:

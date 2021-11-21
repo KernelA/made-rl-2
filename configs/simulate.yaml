@@ -1,0 +1,17 @@
+hydra:
+  run:
+    dir: .
+  sweep:
+    dir: multirun
+    subdir: ${hydra.job.num}_${random_action_proba}
+
+defaults:
+  - _self_
+  - env: env4x4
+  - cross_policy: random
+  - circle_policy: random
+  - override hydra/launcher: joblib
+
+num_sim: 5000
+random_action_proba: 0
+metric_file: ./game_stat.json
