@@ -1,5 +1,4 @@
-import enum
-from typing import Optional
+from typing import Optional, Sequence, Tuple
 
 from numba import jit
 import numpy as np
@@ -9,8 +8,12 @@ CIRCLE_PLAYER = -1
 CROSS_PLAYER = 1
 DRAW = 0
 
+ActionType = Sequence[int]
+EnvStateType = Tuple[str, np.ndarray, int]
+GameState = Tuple[EnvStateType, Optional[int], bool]
 
-@jit(nopython=True, parallel=True)
+
+@jit(nopython=True, parallel=False)
 def is_terminal(board: np.ndarray, current_turn: int, n_win: int) -> Optional[int]:
     # проверим, не закончилась ли игра
     cur_marks, cur_p = np.where(board == current_turn), current_turn
@@ -72,6 +75,9 @@ class TicTacToe:
     def clone(self) -> "TicTacToe":
         return self.__deepcopy__()
 
+    def __repr__(self):
+        return f"{self.__class__.__name__}(n_rows={self.n_rows}, n_cols={self.n_cols}, n_win={self.n_win}, start_player={self._start_player})"
+
     def getEmptySpaces(self) -> np.ndarray:
         if self.emptySpaces is None:
             self.emptySpaces = get_empty_space(self.board)
@@ -91,7 +97,7 @@ class TicTacToe:
                 f"{x + 1}" for x in self.board.reshape(self.n_rows * self.n_cols))
         return self.boardHash
 
-    def isTerminal(self):
+    def isTerminal(self) -> bool:
         # проверим, не закончилась ли игра
         return is_terminal(self.board, self.curTurn, self.n_win)
 
@@ -112,16 +118,16 @@ class TicTacToe:
         board_repr += f"\n{'----'*(self.n_cols)}" + '-'
         return board_repr
 
-    def getState(self):
+    def getState(self) -> EnvStateType:
         return (self._getHash(), self.getEmptySpaces(), self.curTurn)
 
     def action_from_int(self, action_int):
         return (int(action_int / self.n_cols), int(action_int % self.n_cols))
 
-    def int_from_action(self, action):
+    def int_from_action(self, action: ActionType) -> int:
         return action[0] * self.n_cols + action[1]
 
-    def step(self, action):
+    def step(self, action: ActionType) -> GameState:
         if self.board[action[0], action[1]] != 0:
             return self.getState(), -10, True
         self._makeMove(self.curTurn, action[0], action[1])
@@ -146,7 +152,7 @@ class TicTacToe:
     def __str__(self) -> str:
         return self._str_repr(self.board)
 
-    def reset(self):
+    def reset(self) -> None:
         self.board = np.zeros((self.n_rows, self.n_cols), dtype=np.int8)
         if np.iinfo(self.board.dtype).max < self.n_win or np.iinfo(self.board.dtype).min > -self.n_win:
             raise ValueError("Incorrect dtype for board. Please specify other dtype")

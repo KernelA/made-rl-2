@@ -6,8 +6,8 @@ import random
 from anytree import NodeMixin
 
 
-from .env import TicTacToe, CROSS_PLAYER, CIRCLE_PLAYER, DRAW
-from .min_max_tree import StepType
+from .env import TicTacToe, CROSS_PLAYER, CIRCLE_PLAYER, DRAW, ActionType
+from .base_tree import GameTreeBase
 
 
 class MCTSNode(NodeMixin):
@@ -77,15 +77,32 @@ class MCTSNode(NodeMixin):
         return self._num_wins / self.num_visits
 
 
-class MCTS:
-    def __init__(self, generator: Optional[random.Random] = None):
+class MCTS(GameTreeBase):
+    def __init__(self, env: TicTacToe, generator: Optional[random.Random] = None):
         if generator is None:
             generator = random.Random()
         self._generator = generator
         self.root = MCTSNode(name="empty", step=None, is_terminal=False,
                              reward=None, generator=self._generator)
+        self._add_start_nodes(env.clone())
 
-    def add_node(self, prev_node: "MCTSNode", env_state: str, env: TicTacToe) -> "MCTSNode":
+    def _add_start_nodes(self, env: TicTacToe):
+        for pos in env.getEmptySpaces():
+            cur_env = env.clone()
+            (board_state, *_), reward, is_end = cur_env.step(pos)
+            new_state_node = MCTSNode(name=board_state, step=pos,
+                                      is_terminal=is_end, reward=reward, parent=self.root)
+
+    def build_from_env(self, env: TicTacToe):
+        raise NotImplementedError()
+
+    def find_game_state(self, prev_state: NodeMixin, env_state: str):
+        for node in prev_state.children:
+            if node.name == env_state:
+                return node
+        raise RuntimeError(f"Cannot find state from root node: {prev_state.name}")
+
+    def transit_to_state(self, prev_node: "MCTSNode", env_state: str, env: TicTacToe) -> "MCTSNode":
         new_node = prev_node.get_child_node(env_state)
 
         if new_node is None:
@@ -111,7 +128,7 @@ class MCTS:
         best_children = [children[i] for i in range(len(ucb_1)) if ucb_1[i] == max_value]
         return self._generator.choice(best_children)
 
-    def _selection(self, env: TicTacToe, root_node: "MCTSNode", is_max: bool) -> Tuple[StepType, MCTSNode]:
+    def _selection(self, env: TicTacToe, root_node: "MCTSNode", is_max: bool) -> Tuple[ActionType, MCTSNode]:
         root_node = root_node
         l_node = root_node
 
@@ -133,8 +150,8 @@ class MCTS:
 
         return best_move.step, best_move
 
-    def best_move(self, env: TicTacToe, game_state_node: MCTSNode, is_max: bool) -> Tuple[StepType, MCTSNode]:
-        return self._selection(env, game_state_node, is_max)
+    def best_move(self, game_state_node: MCTSNode, env: TicTacToe, is_max: bool) -> Tuple[ActionType, MCTSNode]:
+        return self._selection(env, game_state_node, True)
 
     def _expansion(self, env: TicTacToe, root_node: "MCTSNode", l_node: "MCTSNode", is_max: bool):
         if l_node is root_node:

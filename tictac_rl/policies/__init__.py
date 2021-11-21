@@ -1,1 +1,1 @@
-from .policy import EpsilonGreedyPolicy
+from .policy import EpsilonGreedyPolicy, BasePolicy, TreePolicy, RandomPolicy

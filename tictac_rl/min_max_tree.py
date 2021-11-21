@@ -7,9 +7,9 @@ from anytree import Node
 from anytree.node.nodemixin import NodeMixin
 from tqdm.std import trange
 
-from .env import TicTacToe
+from .env import TicTacToe, ActionType
 from .contstants import PICKLE_PROTOCOL
-from .base_tree import GameTreeBase, StepType
+from .base_tree import GameTreeBase
 
 
 def nodename2hash_key(node: NodeMixin):
@@ -126,6 +126,9 @@ class MinMaxTree(GameTreeBase):
                 return node
         raise RuntimeError(f"Cannot find state from root node: {prev_state.name}")
 
-    def best_move(self, current_state: Node, env: TicTacToe, is_max: bool) -> Tuple[StepType, Node]:
+    def transit_to_state(self, prev_node, env_state: str, env: TicTacToe) -> Node:
+        return self.find_game_state(prev_node, env_state)
+
+    def best_move(self, current_state: Node, env: TicTacToe, is_max: bool) -> Tuple[ActionType, Node]:
         _, best_node = self._minmax_tt(current_state, None, None, is_max)
         return best_node.step, best_node
