@@ -23,13 +23,50 @@ stages:
       size: 116094313
       nfiles: 1
   precompute-tree:
-    cmd: python ./precompute_tree.py -n 3 --start_player cross --out_dir ./trees/3/cross
+    cmd: python ./precompute_tree.py
     deps:
+    - path: ./configs/minmax_precompute.yaml
+      md5: 33d9feaed790478e7f3c5f14f8fbb5fa
+      size: 121
     - path: ./precompute_tree.py
-      md5: de55971f3381582cec4b31ea6891f310
-      size: 1125
+      md5: b81e6a27da4e207f94751c7e914b981a
+      size: 760
     outs:
     - path: ./trees/3/cross
-      md5: cc2a0ece3fc9bf1c6195a0f90bf8ecfb.dir
-      size: 62450851
+      md5: a4a50d2c66888f5fe664950468d48ceb.dir
+      size: 62450935
+      nfiles: 1
+  precompute-mcts-cross:
+    cmd: python ./precompute_mctc_tree.py -cn mcts_precompute_cross
+    deps:
+    - path: ./configs/mcts_precompute_cross.yaml
+      md5: 2634fd95a7f3e55eaf9f03d3dacb16e6
+      size: 344
+    - path: ./precompute_mctc_tree.py
+      md5: fdaa17d9f9d466e73a2ef26ddc63b210
+      size: 1430
+    params:
+      configs/mcts_precompute_cross.yaml:
+        num_simulation: 100
+    outs:
+    - path: ./trees/4/cross
+      md5: 6a089c7ff7c5f8685496f6e518e9f8b1.dir
+      size: 17179448
+      nfiles: 1
+  precompute-mcts-circle:
+    cmd: python ./precompute_mctc_tree.py -cn mcts_precompute_circle
+    deps:
+    - path: ./configs/mcts_precompute_circle.yaml
+      md5: 74f18520979d7c268cbb8303ec86329c
+      size: 345
+    - path: ./precompute_mctc_tree.py
+      md5: fdaa17d9f9d466e73a2ef26ddc63b210
+      size: 1430
+    params:
+      configs/mcts_precompute_circle.yaml:
+        num_simulation: 100
+    outs:
+    - path: ./trees/4/circle
+      md5: 1ca57bc51b19bf86e36f99e934d80c62.dir
+      size: 20236969
       nfiles: 1

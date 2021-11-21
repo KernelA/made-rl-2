@@ -1,7 +1,36 @@
 stages:
   precompute-tree:
-    cmd: python ./precompute_tree.py -n 3 --start_player cross --out_dir ./trees/3/cross
+    vars:
+      - ./configs/minmax_precompute.yaml:out_dir
+    cmd: python ./precompute_tree.py
     deps:
       - ./precompute_tree.py
+      - ./configs/minmax_precompute.yaml
     outs:
-      - ./trees/3/cross
+      - ${out_dir}
+
+  precompute-mcts-cross:
+    vars:
+      - ./configs/mcts_precompute_cross.yaml:out_dir
+    cmd: python ./precompute_mctc_tree.py -cn mcts_precompute_cross
+    deps:
+      - ./precompute_mctc_tree.py
+      - ./configs/mcts_precompute_cross.yaml
+    params:
+      - ./configs/mcts_precompute_cross.yaml:
+          - num_simulation
+    outs:
+      - ${out_dir}
+
+  precompute-mcts-circle:
+    vars:
+      - ./configs/mcts_precompute_circle.yaml:out_dir
+    cmd: python ./precompute_mctc_tree.py -cn mcts_precompute_circle
+    deps:
+      - ./precompute_mctc_tree.py
+      - ./configs/mcts_precompute_circle.yaml
+    params:
+      - ./configs/mcts_precompute_circle.yaml:
+          - num_simulation
+    outs:
+      - ${out_dir}

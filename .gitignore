@@ -138,3 +138,4 @@ cython_debug/
 
 .vscode/
 !tictac_rl/env/
+!configs/env

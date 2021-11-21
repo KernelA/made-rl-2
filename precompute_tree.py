@@ -1,40 +1,29 @@
-import argparse
 import os
 import logging
-import sys
 
+import hydra
+from hydra import utils
 import log_set
 from tictac_rl import TicTacToe, MinMaxTree
 from tictac_rl.env.tictac import CROSS_PLAYER
 
-sys.setrecursionlimit(sys.getrecursionlimit() * 20)
 
-
-def main(args):
-    os.makedirs(args.out_dir, exist_ok=True)
+@hydra.main(config_name="minmax_precompute", config_path="configs")
+def main(config):
+    os.makedirs(config.out_dir, exist_ok=True)
     logger = logging.getLogger()
 
-    start_player = CROSS_PLAYER
+    env: TicTacToe = utils.instantiate(config.env)
 
-    env = TicTacToe(args.n, args.n, args.n, start_player)
-
-    logger.info("Build tree")
+    logger.info("Build tree for %s", repr(env))
     tree = MinMaxTree()
     tree.build_from_env(env)
 
-    dump_name = os.path.join(args.out_dir, f"{args.n}_{args.n}_start_{args.start_player}.pickle")
+    dump_name = os.path.join(
+        config.out_dir, f"{env.n_rows}_{env.n_cols}_{env.n_win}_start_{env._start_player}.pickle")
     logger.info("Save dump to %s", dump_name)
     tree.dump(dump_name)
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-n", type=int, required=True, help="A size of grid n x n")
-    parser.add_argument("--start_player", type=str,
-                        choices=["cross"], default="cross",
-                        required=True, help="First turn")
-    parser.add_argument("--out_dir", type=str, required=True)
-
-    args = parser.parse_args()
-
-    main(args)
+    main()

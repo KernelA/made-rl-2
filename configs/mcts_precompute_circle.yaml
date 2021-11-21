@@ -1,0 +1,20 @@
+hydra:
+  run:
+    dir: .
+  output_subdir: null
+
+defaults:
+  - _self_
+  - env: env4x4
+
+out_dir: ./trees/4/circle
+num_simulation: 100
+
+cross_policy:
+  _target_: tictac_rl.policies.policy.RandomPolicy
+
+circle_policy:
+  _target_: tictac_rl.policies.policy.TreePolicy
+  tree: 
+    _target_: tictac_rl.mctc_tree.MCTS
+    env: ${env}

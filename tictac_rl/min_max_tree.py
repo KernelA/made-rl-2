@@ -53,12 +53,13 @@ def r_build_minmax_tree(tic_tac_env: TicTacToe, parent_node: Node, progress):
 
 
 class MinMaxTree(GameTreeBase):
-    def __init__(self, generator: Optional[random.Random] = None):
+    def __init__(self, generator: Optional[random.Random] = None, eps: float = 0):
         if generator is None:
             generator = random.Random()
 
         self.root = Node("empty", reward=0)
         self._generator = generator
+        self._eps = eps
 
     def build_from_env(self, tic_tac_env: TicTacToe):
         tic_tac_env.reset()
@@ -81,6 +82,11 @@ class MinMaxTree(GameTreeBase):
     def _minmax_tt(self, node: Node, alpha: Optional[float], beta: Optional[float], is_max: bool) -> Tuple[int, Node]:
         if node.is_leaf:
             return node.reward, node
+
+        # Random action
+        if self._generator.random() < self._eps:
+            best_node = self._generator.choice(node.children)
+            return 0, best_node
 
         max_func = lt
 

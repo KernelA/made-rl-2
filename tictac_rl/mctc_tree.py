@@ -78,12 +78,14 @@ class MCTSNode(NodeMixin):
 
 
 class MCTS(GameTreeBase):
-    def __init__(self, env: TicTacToe, generator: Optional[random.Random] = None):
+    def __init__(self, env: TicTacToe, generator: Optional[random.Random] = None, eps: float = 0, depth_limit: Optional[int] = None):
         if generator is None:
             generator = random.Random()
         self._generator = generator
         self.root = MCTSNode(name="empty", step=None, is_terminal=False,
                              reward=None, generator=self._generator)
+        self._eps = eps
+        self._depth_limit = depth_limit
         self._add_start_nodes(env.clone())
 
     def _add_start_nodes(self, env: TicTacToe):
@@ -122,6 +124,9 @@ class MCTS(GameTreeBase):
         return new_node_start
 
     def _find_best_child(self, children, root_name: str, func):
+        if self._generator.random() < self._eps:
+            return self._generator.choice(children)
+
         ucb_1 = tuple(func(child, root_name) for child in children)
         max_value = max(ucb_1)
 

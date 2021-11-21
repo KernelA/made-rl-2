@@ -1,0 +1,4 @@
+_target_: tictac_rl.env.tictac.TicTacToe
+n_rows: 3
+n_cols: ${.n_rows}
+n_win: ${.n_rows}
