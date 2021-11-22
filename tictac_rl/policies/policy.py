@@ -2,11 +2,10 @@ import random
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from tictac_rl.min_max_tree import MinMaxTree
-
 from ..env import TicTacToe, ActionType
 from ..utils import QTableDict
 from ..base_tree import GameTreeBase
+from ..contstants import EMPTY_STATE
 
 
 class BasePolicy(ABC):
@@ -61,8 +60,15 @@ class EpsilonGreedyPolicy(BasePolicy):
         self.seed = seed
 
     def action(self, env: TicTacToe, env_hash: Optional[str]) -> ActionType:
-        if self._generator.random() < self._epsiolon and env_hash is None:
+        if self._generator.random() < self._epsiolon:
             return random.choice(env.getEmptySpaces())
-        else:
-            action = max(self.q_function.get_actions(env_hash).items(), key=lambda x: x[1])[0]
-            return env.action_from_int(action)
+
+        if env_hash is None:
+            env_hash = EMPTY_STATE
+
+        action = max(self.q_function.get_actions(env_hash).items(), key=lambda x: x[1])[0]
+
+        return env.action_from_int(action)
+
+    def reset(self):
+        pass

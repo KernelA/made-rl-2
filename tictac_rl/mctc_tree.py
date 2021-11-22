@@ -7,6 +7,7 @@ from anytree import NodeMixin
 
 
 from .env import TicTacToe, CROSS_PLAYER, CIRCLE_PLAYER, DRAW, ActionType
+from .contstants import EMPTY_STATE
 from .base_tree import GameTreeBase
 
 
@@ -85,7 +86,7 @@ class MCTS(GameTreeBase):
         if generator is None:
             generator = random.Random()
         self._generator = generator
-        self.root = MCTSNode(name="empty", step=None, is_terminal=False,
+        self.root = MCTSNode(name=EMPTY_STATE, step=None, is_terminal=False,
                              reward=None, generator=self._generator)
         self._eps = eps
         self._depth_limit = depth_limit

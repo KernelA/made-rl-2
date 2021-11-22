@@ -6,7 +6,7 @@ from ..policies import BasePolicy
 from ..env import CROSS_PLAYER, ActionType
 
 CallbackInfo = namedtuple(
-    "CallbackInfo", ["old_env_state", "action", "new_state", "reward", "action_player"])
+    "CallbackInfo", ["old_env_state", "action", "new_state", "reward", "action_player", "is_end"])
 
 
 def simulate(env: TicTacToe, cross_policy: BasePolicy, circle_policy: BasePolicy,
@@ -27,10 +27,10 @@ def simulate(env: TicTacToe, cross_policy: BasePolicy, circle_policy: BasePolicy
         old_state = state_str
         old_turn = env.curTurn
 
-        (state_str, _, _), reward, is_end = env.step(step)
+        (state_str, *_), reward, is_end = env.step(step)
 
         if callback is not None:
-            callback(CallbackInfo(old_state, step, state_str, reward, old_turn))
+            callback(CallbackInfo(old_state, step, state_str, reward, old_turn, is_end))
 
         if is_end:
             return reward

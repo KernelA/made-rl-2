@@ -3,6 +3,7 @@ import itertools
 
 from numba import jit
 import numpy as np
+from ..contstants import EMPTY_STATE
 
 
 CIRCLE_PLAYER = -1
@@ -142,7 +143,11 @@ class TicTacToe:
 
     def from_state_str(self, state_str: str) -> "TicTacToe":
         new_env = self.clone()
-        new_env.board = np.array(tuple(map(int, state_str)), dtype=self.board.dtype) - 1
+
+        if state_str == EMPTY_STATE:
+            new_env.board = np.zeros_like(self.board)
+        else:
+            new_env.board = np.array(tuple(map(int, state_str)), dtype=self.board.dtype) - 1
 
         counts = new_env.board.size - np.count_nonzero(new_env.board == np.int8(0))
         new_env.curTurn = int(self._start_player)

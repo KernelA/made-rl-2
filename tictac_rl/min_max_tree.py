@@ -1,6 +1,5 @@
 from typing import Tuple, Optional, Iterable
 from operator import gt, lt
-import pickle
 import random
 
 from anytree import Node
@@ -8,8 +7,8 @@ from anytree.node.nodemixin import NodeMixin
 from tqdm.std import trange
 
 from .env import TicTacToe, ActionType
-from .contstants import PICKLE_PROTOCOL
 from .base_tree import GameTreeBase
+from .contstants import EMPTY_STATE
 
 
 def nodename2hash_key(node: NodeMixin):
@@ -44,7 +43,7 @@ def r_build_minmax_tree(tic_tac_env: TicTacToe, parent_node: Node, progress):
         new_env = tic_tac_env.clone()
         node_name, reward, is_end = new_env.step(pos)
         node = Node(node_name[0], parent=parent_node, reward=reward *
-                    int(new_env._start_player), step=tuple(pos))
+                    int(new_env._start_player), step=tuple(pos), is_terminal=is_end)
 
         if not is_end:
             r_build_minmax_tree(new_env, node, progress)
@@ -57,7 +56,7 @@ class MinMaxTree(GameTreeBase):
         if generator is None:
             generator = random.Random()
 
-        self.root = Node("empty", reward=0)
+        self.root = Node(EMPTY_STATE, reward=0, is_terminal=False)
         self._generator = generator
         self._eps = eps
 

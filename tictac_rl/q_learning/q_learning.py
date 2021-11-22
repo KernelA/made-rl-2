@@ -1,4 +1,3 @@
-from os import read
 from typing import Sequence, Tuple, Optional
 import random
 from collections import namedtuple
@@ -15,7 +14,7 @@ from ..policies import BasePolicy, EpsilonGreedyPolicy
 from ..stat import StreamignMean
 
 TDLearningRes = namedtuple(
-    "TDLearningRes", ["mean_reward", "mean_step", "test_mean_rewards", "test_episodes"])
+    "TDLearningRes", ["mean_reward", "test_mean_rewards", "test_episodes"])
 
 
 class TDLearning(ABC):
@@ -30,6 +29,8 @@ class TDLearning(ABC):
         self._circle_policy = circle_policy
         self._is_learning = kwargs["is_learning"]
         self._logger = logging.getLogger("simulation")
+
+        assert self._circle_policy is not self._cross_policy
 
         self._q_player = CROSS_PLAYER
 
@@ -47,7 +48,7 @@ class TDLearning(ABC):
         else:
             self._q_table = self._cross_policy.q_function
 
-        if isinstance(self._circle_policy, EpsilonGreedyPolicy) and\
+        if isinstance(self._cross_policy, EpsilonGreedyPolicy) and\
                 isinstance(self._circle_policy, EpsilonGreedyPolicy) and self._is_learning:
             raise ValueError(
                 "Both player are based on QTable please specify other policy for one the him")
@@ -61,26 +62,28 @@ class TDLearning(ABC):
         with open(self._path_to_state_file, "r", encoding="utf-8") as file:
             all_states_for_player = json.load(file)
 
-        for state in all_states_for_player:
-            new_env = self._env.from_state_str(state)
+        for state_str in all_states_for_player:
+            new_env = self._env.from_state_str(state_str)
 
-            for action in all_states_for_player[state]:
-                state, reward, is_end = new_env.step(action)
-                if is_end:
-                    break
+            for int_action in all_states_for_player[state_str]:
+                _, reward, is_end = new_env.step(new_env.action_from_int(int_action))
+
                 if reward is not None:
                     reward *= self._q_player
                 else:
                     reward = 0
 
-                q_table.set_value(state, action, reward)
+                q_table.set_value(state_str, int_action, reward)
+
+                if is_end:
+                    break
 
     @abstractmethod
     def _update_q_function(self, info: CallbackInfo):
         pass
 
     def _generate_episode(self) -> int:
-        total_rewards = simulate(self._env, self._circle_policy,
+        total_rewards = simulate(self._env, self._cross_policy,
                                  self._circle_policy, self._update_q_function)
 
         return total_rewards
@@ -102,7 +105,6 @@ class TDLearning(ABC):
         test_episode = []
 
         mean_train_reward = StreamignMean()
-        mean_step = StreamignMean()
 
         print_every = num_episodes // 10
         compute_every = 4
@@ -123,7 +125,7 @@ class TDLearning(ABC):
             test_rewards.append(self._evaluate(num_episodes))
             test_episode.append(1)
 
-        return TDLearningRes(mean_train_reward.mean(), mean_step.mean(), np.array(test_rewards), np.array(test_episode))
+        return TDLearningRes(mean_train_reward.mean(), np.array(test_rewards), np.array(test_episode))
 
 
 class QLearningSimulation(TDLearning):

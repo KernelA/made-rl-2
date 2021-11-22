@@ -15,7 +15,7 @@ handlers:
   file:
     class: logging.FileHandler
     level: DEBUG
-    filename: tictoc.log 
+    filename: logs/tictoc.log 
     encoding: utf-8
     mode: 'w'
 loggers:

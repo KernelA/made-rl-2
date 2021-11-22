@@ -1,0 +1,5 @@
+_target_: tictac_rl.policies.policy.EpsilonGreedyPolicy
+q_function:
+  _target_: tictac_rl.utils.QTableDict
+epsilon: 0.01
+seed: 125

@@ -21,15 +21,19 @@ def main(config):
 
     possible_states = defaultdict(set)
 
-    is_save = env._start_player == config.start_player
+    is_save = config.start_player == env._start_player
+
+    def add_states(node):
+        for child in node.children:
+            possible_states[node.name].add(env.int_from_action(child.step))
 
     for group in tqdm.tqdm(anytree.LevelOrderGroupIter(tree.root), total=tree.root.height):
-        if len(group) == 1:
-            continue
-        if is_save:
-            for node in group:
-                for child in node.children:
-                    possible_states[node.name].add(env.int_from_action(child.step))
+        for node in group:
+            if node.is_terminal:
+                possible_states[node.name] = set()
+
+            if is_save:
+                add_states(node)
 
         is_save = not is_save
 

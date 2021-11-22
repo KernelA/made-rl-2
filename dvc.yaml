@@ -35,23 +35,35 @@ stages:
     outs:
       - ${out_dir}
 
-  precompute-states-cross:
+  precompute-states-3x3-cross:
     vars:
       - out_path: ./stat/3/cross_stat.json 
     cmd: python ./generate_all_states.py start_player=1 state_file=${out_path}
     deps:
       - ./generate_all_states.py
       - ./configs/generate_states.yaml
+      - ./trees/minmax/3/cross/3_3_3_start_1.pickle
     outs:
       - ${out_path}
   
-  precompute-states-circle:
+  precompute-states-3x3-circle:
     vars:
       - out_path: ./stat/3/circle_stat.json 
     cmd: python ./generate_all_states.py start_player=-1 state_file=${out_path}
     deps:
       - ./generate_all_states.py
       - ./configs/generate_states.yaml
+      - ./trees/minmax/3/cross/3_3_3_start_1.pickle
     outs:
       - ${out_path}
 
+  compute-minmax-game-stat:
+    vars:
+      - ./configs/simulate.yaml
+    cmd: python ./simpulate_game.py -m random_action_proba=0.1,0.15,0.25,0.3
+    deps:
+      - ./simpulate_game.py 
+      - ./configs/simulate.yaml
+      - ./trees/minmax/3/cross/3_3_3_start_1.pickle
+    outs:
+      - ${hydra.sweep.dir}

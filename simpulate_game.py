@@ -6,7 +6,7 @@ import hydra
 import tqdm
 
 import log_set
-from tictac_rl import TicTacToe, RandomPolicy, TreePolicy, simulate
+from tictac_rl import TreePolicy, simulate
 from tictac_rl.env import CIRCLE_PLAYER, CROSS_PLAYER, DRAW
 
 

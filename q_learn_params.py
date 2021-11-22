@@ -1,18 +1,15 @@
-import json
-import pathlib
 import logging
 
 import hydra
-import tqdm
+from torch.utils.tensorboard import SummaryWriter
 
 import log_set
-from tictac_rl import TicTacToe, RandomPolicy, TreePolicy, simulate
+from tictac_rl import TreePolicy
 from tictac_rl.q_learning import QLearningSimulation
 
-from tictac_rl.env import CIRCLE_PLAYER, CROSS_PLAYER, DRAW
 
-
-@hydra.main(config_path="configs", config_name="simulate")
+# TODO: debug simulation
+@hydra.main(config_path="configs", config_name="table_q_learning")
 def main(config):
     logger = logging.getLogger()
 
@@ -22,26 +19,18 @@ def main(config):
     circle_policy = hydra.utils.instantiate(config.circle_policy)
 
     if isinstance(cross_policy, TreePolicy):
-        cross_policy.tree.set_random_proba(config.random_action_proba)
+        cross_policy.tree.set_random_proba(config.tree_random_action_proba)
 
     if isinstance(circle_policy, TreePolicy):
-        circle_policy.tree.set_random_proba(config.random_action_proba)
+        circle_policy.tree.set_random_proba(config.tree_random_action_proba)
 
-    rewards = []
+    generator = hydra.utils.instantiate(config.generator)
 
-    for _ in tqdm.trange(config.num_sim, miniters=100):
-        rewards.append(simulate(env, cross_policy, circle_policy))
-
-    metric_file = pathlib.Path(config.metric_file)
-    metric_file.parent.mkdir(parents=True, exist_ok=True)
-
-    game_stat = {"cross_win": rewards.count(CROSS_PLAYER) / len(rewards), "circle_win": rewards.count(
-        CIRCLE_PLAYER) / len(rewards), "draw": rewards.count(DRAW) / len(rewards)}
-
-    logger.info("Save metric to %s", metric_file)
-
-    with open(metric_file, "w", encoding="utf-8") as file:
-        json.dump(game_stat, file)
+    q_learner = QLearningSimulation(env, cross_policy, circle_policy, config.path_to_state,
+                                    is_learning=True,
+                                    generator=generator, gamma=config.gamma, alpha=config.learning_rate)
+    with SummaryWriter(config.log_dir):
+        td_res = q_learner.simulate(config.num_train_iterations, config.num_test_iterations)
 
 
 if __name__ == "__main__":
