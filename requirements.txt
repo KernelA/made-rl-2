@@ -7,4 +7,4 @@ dvc[gdrive]~=2.8
 numba~=0.54.1
 hydra-core~=1.1.1
 hydra-joblib-launcher~=1.1.5
-tensorborad~=2.7
+tensorboard~=2.7
