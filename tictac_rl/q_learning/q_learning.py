@@ -58,6 +58,12 @@ class TDLearning(ABC):
 
         self._generator = generator
 
+    def _transform_reward(self, reward: Optional[int]) -> int:
+        if reward is None:
+            reward = 0
+
+        return self._q_player * reward
+
     def _init_qtable(self, q_table: QTableDict):
         with open(self._path_to_state_file, "r", encoding="utf-8") as file:
             all_states_for_player = json.load(file)
@@ -68,10 +74,7 @@ class TDLearning(ABC):
             for int_action in all_states_for_player[state_str]:
                 _, reward, is_end = new_env.step(new_env.action_from_int(int_action))
 
-                if reward is not None:
-                    reward *= self._q_player
-                else:
-                    reward = 0
+                reward = self._transform_reward(reward)
 
                 q_table.set_value(state_str, int_action, reward)
 
@@ -86,7 +89,7 @@ class TDLearning(ABC):
         total_rewards = simulate(self._env, self._cross_policy,
                                  self._circle_policy, self._update_q_function)
 
-        return total_rewards
+        return self._transform_reward(total_rewards)
 
     def _evaluate(self, num_episodes: int):
         self._is_learning = False
@@ -150,10 +153,7 @@ class QLearningSimulation(TDLearning):
             old_state = callback_info.old_env_state
             action = self._env.int_from_action(callback_info.action)
             new_state = callback_info.new_state
-            reward = callback_info.reward
-            if reward is None:
-                reward = 0
-            reward *= self._q_player
+            reward = self._transform_reward(callback_info.reward)
 
             old_value = self._q_table.get_value(old_state, action)
             greedy_reward = self._gamma * max(self._q_table.get_actions(new_state).values())

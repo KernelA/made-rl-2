@@ -1,11 +1,23 @@
 version: 1
 formatters:
   default_console_thread:
-    (): log_set.utc_fromatter.UTCFormatter
-    format: '%(asctime)s %(levelname)s %(threadName)s %(module)s %(funcName)s %(message)s'
+    (): log_set.utc_fromatter.ColoredUTCFormatter
+    format: '%(log_color)s%(asctime)s %(levelname)s %(threadName)s %(module)s %(funcName)s %(message)s'
+    log_colors:
+      DEBUG: 'cyan'
+      INFO: 'green'
+      WARNING: 'yellow'
+      ERROR: 'red'
+      CRITICAL: 'red,bg_white'
   default_console_process:
-    (): log_set.utc_fromatter.UTCFormatter
-    format: '%(asctime)s %(levelname)s %(processName)s %(module)s %(funcName)s %(message)s'
+    (): log_set.utc_fromatter.ColoredUTCFormatter
+    format: '%(log_color)s%(asctime)s %(levelname)s %(processName)s %(module)s %(funcName)s %(message)s'
+    log_colors:
+      DEBUG: 'cyan'
+      INFO: 'green'
+      WARNING: 'yellow'
+      ERROR: 'red'
+      CRITICAL: 'red,bg_white'
 handlers:
   console:
     class: logging.StreamHandler

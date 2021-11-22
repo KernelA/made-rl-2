@@ -7,7 +7,7 @@ hydra:
 
 defaults:
   - env: env3x3
-  - cross_policy: from_dump
+  - cross_policy: tree_from_dump
   - circle_policy: random
   - override hydra/launcher: joblib
   - _self_

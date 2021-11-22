@@ -5,6 +5,7 @@ numpy~=1.20.0
 anytree~=2.8.0
 dvc[gdrive]~=2.8
 numba~=0.54.1
+colorlog~=6.6.0
 hydra-core~=1.1.1
 hydra-joblib-launcher~=1.1.5
 tensorboard~=2.7
