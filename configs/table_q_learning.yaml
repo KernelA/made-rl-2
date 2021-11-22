@@ -4,6 +4,8 @@ hydra:
   sweep:
     dir: multirun
     subdir: ${hydra.job.num}_${random_action_proba}
+  launcher:
+    n_jobs: 8
 
 defaults:
   - env: env3x3
