@@ -2,8 +2,9 @@ hydra:
   run:
     dir: .
   sweep:
-    dir: multirun
-    subdir: ${hydra.job.num}_${random_action_proba}
+    dir: ./exp/table_q_learning/cross
+    subdir: ${hydra.job.num}_alpha=${learning_rate}_gamma=${gamma}
+
   launcher:
     n_jobs: 8
 
@@ -26,7 +27,7 @@ num_test_iterations: 10
 num_valid_episodes: 10
 tree_random_action_proba: 0
 
-exp_dir: ./exp/table_q_learning/cross
+exp_dir: .
 
 cross_policy:
   tree:

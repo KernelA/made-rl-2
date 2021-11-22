@@ -24,8 +24,8 @@ stages:
 
   precompute-mcts-circle:
     vars:
-      - out_dir: ./trees/mcts/4/circle 
-    cmd: python ./precompute_mctc_tree.py out_dir=${out_dir} cross_policy=random circle_policy=mcts_tree circle_policy.tree.env='\${env}'
+      - out_dir: ./trees/mcts/4/circle
+    cmd: python ./precompute_mctc_tree.py out_dir=${out_dir} cross_policy=random circle_policy=mcts_tree circle_policy.tree.env=\${env}
     deps:
       - ./precompute_mctc_tree.py
       - ./configs/mcts_precompute.yaml
@@ -37,7 +37,7 @@ stages:
 
   precompute-states-3x3-cross:
     vars:
-      - out_path: ./stat/3/cross_stat.json 
+      - out_path: ./stat/3/cross_stat.json
     cmd: python ./generate_all_states.py start_player=1 state_file=${out_path}
     deps:
       - ./generate_all_states.py
@@ -45,10 +45,10 @@ stages:
       - ./trees/minmax/3/cross/3_3_3_start_1.pickle
     outs:
       - ${out_path}
-  
+
   precompute-states-3x3-circle:
     vars:
-      - out_path: ./stat/3/circle_stat.json 
+      - out_path: ./stat/3/circle_stat.json
     cmd: python ./generate_all_states.py start_player=-1 state_file=${out_path}
     deps:
       - ./generate_all_states.py
@@ -63,22 +63,49 @@ stages:
       - out_dir: stat/cross_minmax_vs_random/
       - tree_file: ./trees/minmax/3/cross/3_3_3_start_1.pickle
     cmd: python ./simulate_game.py -m cross_policy=tree_from_dump cross_policy.tree.path_to_file='\${hydra:runtime.cwd}'/${tree_file} circle_policy=random random_action_proba=0.9,0.95,0.96,0.97,0.99 hydra.sweep.dir=${out_dir}
+    params:
+      - ./configs/simulate.yaml:
+          - num_sim
     deps:
-      - ./simulate_game.py 
+      - ./simulate_game.py
       - ./configs/simulate.yaml
       - ${tree_file}
     outs:
       - ${out_dir}
-    
+
   compute-minmax-game-circle-minmax:
     vars:
       - ./configs/simulate.yaml
       - out_dir: stat/cross_random_vs_minmax/
       - tree_file: ./trees/minmax/3/cross/3_3_3_start_1.pickle
     cmd: python ./simulate_game.py -m cross_policy=random circle_policy=tree_from_dump circle_policy.tree.path_to_file='\${hydra:runtime.cwd}'/${tree_file} random_action_proba=0.7,0.75,0.85,0.9 hydra.sweep.dir=${out_dir}
+    params:
+      - ./configs/simulate.yaml:
+          - num_sim
     deps:
-      - ./simulate_game.py 
+      - ./simulate_game.py
       - ./configs/simulate.yaml
       - ${tree_file}
     outs:
       - ${out_dir}
+
+  q-table-learning-train-cross:
+    vars:
+      - ./configs/table_q_learning.yaml:exp_dir,path_to_state
+      - tree_path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+    cmd: python ./q_learn_params.py -m learning_rate=0.01,0.1,0.2 gamma=0.01,0.1,0.2
+    params:
+      - ./configs/table_q_learning.yaml:
+          - learning_rate
+          - gamma
+          - num_train_iterations
+          - num_test_iterations
+          - num_valid_episodes
+          - tree_random_action_proba
+    deps:
+      - ./q_learn_params.py
+      - ./configs/simulate.yaml
+      - ${path_to_state}
+      - ${tree_path}
+    outs:
+      - ${exp_dir}
