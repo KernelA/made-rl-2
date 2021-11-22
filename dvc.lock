@@ -37,39 +37,39 @@ stages:
       size: 64100790
       nfiles: 1
   precompute-mcts-cross:
-    cmd: python ./precompute_mctc_tree.py cross_policy.tree.env=${env}
+    cmd: python ./precompute_mctc_tree.py out_dir=./trees/mcts/4/cross cross_policy.tree.env='${env}'
     deps:
     - path: ./configs/mcts_precompute.yaml
       md5: 21d116c11542150aac99054e974bd996
-      size: 205
+      size: 192
     - path: ./precompute_mctc_tree.py
       md5: 8cee4492475daca0c13e812bcb8c4ab0
-      size: 1442
+      size: 1398
     params:
       configs/mcts_precompute.yaml:
         num_simulation: 40000
     outs:
     - path: ./trees/mcts/4/cross
-      md5: 3cfbf4dc99991d65331d8b8437c28609.dir
-      size: 1623007880
+      md5: 98a3b7e1bcfe92d9d95667037c8c83e7.dir
+      size: 1599199683
       nfiles: 1
   precompute-mcts-circle:
     cmd: python ./precompute_mctc_tree.py out_dir=./trees/mcts/4/circle cross_policy=random
-      circle_policy=mcts_tree circle_policy.tree.env=${env}
+      circle_policy=mcts_tree circle_policy.tree.env='${env}'
     deps:
     - path: ./configs/mcts_precompute.yaml
       md5: 21d116c11542150aac99054e974bd996
-      size: 205
+      size: 192
     - path: ./precompute_mctc_tree.py
       md5: 8cee4492475daca0c13e812bcb8c4ab0
-      size: 1442
+      size: 1398
     params:
       configs/mcts_precompute.yaml:
         num_simulation: 40000
     outs:
     - path: ./trees/mcts/4/circle
-      md5: 244811abf4e19aaf88893dc2634f195f.dir
-      size: 2861638423
+      md5: 519ffbe99987c9260538c5e8964fdee2.dir
+      size: 2864640874
       nfiles: 1
   precompute-states-cross:
     cmd: python ./generate_all_states.py start_player=1 state_file=./stat/3/cross_stat.json
@@ -102,14 +102,14 @@ stages:
     deps:
     - path: ./configs/minmax_precompute.yaml
       md5: 3a0af9561c281408ba362d73480452ad
-      size: 128
+      size: 118
     - path: ./precompute_tree.py
       md5: b81e6a27da4e207f94751c7e914b981a
-      size: 760
+      size: 731
     outs:
     - path: ./trees/minmax/3/cross
-      md5: a136f2b304d88f044b70c8ab52b9ad11.dir
-      size: 64100790
+      md5: 0a875b4535cfcc6a8e4d6f995619ad20.dir
+      size: 64100756
       nfiles: 1
   compute-minmax-game-circle-random:
     cmd: python ./simulate_game.py -m cross_policy=random circle_policy=from_dump
@@ -131,39 +131,71 @@ stages:
       size: 28250
       nfiles: 26
   compute-minmax-game-cross-minmax:
-    cmd: python ./simulate_game.py -m cross_policy=from_dump cross_policy.tree.path_to_file=${hydra:runtime.cwd}/./trees/minmax/3/cross/3_3_3_start_1.pickle
+    cmd: python ./simulate_game.py -m cross_policy=tree_from_dump cross_policy.tree.path_to_file='${hydra:runtime.cwd}'/./trees/minmax/3/cross/3_3_3_start_1.pickle
       circle_policy=random random_action_proba=0.9,0.95,0.96,0.97,0.99 hydra.sweep.dir=stat/cross_minmax_vs_random/
     deps:
     - path: ./configs/simulate.yaml
-      md5: c206af68c2cd4409c0269f4e7de939b4
-      size: 381
+      md5: 9133eda2c71b262946d39f1d80f05ed3
+      size: 367
     - path: ./simulate_game.py
       md5: 429fd96f263e4b84bc93f9145b3bbc54
-      size: 1904
+      size: 1848
     - path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
-      md5: c813f1f0c7f387619e587fea9d5145f5
-      size: 64100790
+      md5: 3cc3797e6781edce02eb617756be9c97
+      size: 64100756
     outs:
     - path: stat/cross_minmax_vs_random/
-      md5: 9ed83bd260d8f1159b64b62033b2588b.dir
-      size: 28247
+      md5: ec9e7ba56858f0b2f2ee8d6271d9e355.dir
+      size: 27177
       nfiles: 26
   compute-minmax-game-circle-minmax:
     cmd: python ./simulate_game.py -m cross_policy=random circle_policy=tree_from_dump
-      circle_policy.tree.path_to_file=${hydra:runtime.cwd}/./trees/minmax/3/cross/3_3_3_start_1.pickle
+      circle_policy.tree.path_to_file='${hydra:runtime.cwd}'/./trees/minmax/3/cross/3_3_3_start_1.pickle
       random_action_proba=0.7,0.75,0.85,0.9 hydra.sweep.dir=stat/cross_random_vs_minmax/
     deps:
     - path: ./configs/simulate.yaml
       md5: 9133eda2c71b262946d39f1d80f05ed3
-      size: 386
+      size: 367
     - path: ./simulate_game.py
       md5: 429fd96f263e4b84bc93f9145b3bbc54
-      size: 1904
+      size: 1848
     - path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
-      md5: c813f1f0c7f387619e587fea9d5145f5
-      size: 64100790
+      md5: 3cc3797e6781edce02eb617756be9c97
+      size: 64100756
     outs:
     - path: stat/cross_random_vs_minmax/
-      md5: 234d33c2d9d6a6014f1226e0f6713f24.dir
-      size: 23547
+      md5: 43f49da4bf49cb0d7380e66bdc8b9429.dir
+      size: 22587
       nfiles: 21
+  precompute-states-3x3-cross:
+    cmd: python ./generate_all_states.py start_player=1 state_file=./stat/3/cross_stat.json
+    deps:
+    - path: ./configs/generate_states.yaml
+      md5: f39e23ed4bea242021942e3a196d1fda
+      size: 257
+    - path: ./generate_all_states.py
+      md5: 405088f6e39da006284bf5235e7361a5
+      size: 1314
+    - path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+      md5: 3cc3797e6781edce02eb617756be9c97
+      size: 64100756
+    outs:
+    - path: ./stat/3/cross_stat.json
+      md5: fc118a9307dc305c3d6adfd44c7b2d17
+      size: 78520
+  precompute-states-3x3-circle:
+    cmd: python ./generate_all_states.py start_player=-1 state_file=./stat/3/circle_stat.json
+    deps:
+    - path: ./configs/generate_states.yaml
+      md5: f39e23ed4bea242021942e3a196d1fda
+      size: 257
+    - path: ./generate_all_states.py
+      md5: 405088f6e39da006284bf5235e7361a5
+      size: 1314
+    - path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+      md5: 3cc3797e6781edce02eb617756be9c97
+      size: 64100756
+    outs:
+    - path: ./stat/3/circle_stat.json
+      md5: 2eeae758b45b5d9b10ef3488d441b136
+      size: 70349

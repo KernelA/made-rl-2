@@ -22,6 +22,7 @@ class TDLearning(ABC):
                  cross_policy: BasePolicy,
                  circle_policy: BasePolicy,
                  path_to_state_file: str,
+                 generator: random.Random = None,
                  **kwargs):
         self._env = env
         self._cross_policy = cross_policy
@@ -51,6 +52,11 @@ class TDLearning(ABC):
                 isinstance(self._circle_policy, EpsilonGreedyPolicy) and self._is_learning:
             raise ValueError(
                 "Both player are based on QTable please specify other policy for one the him")
+
+        if generator is None:
+            generator = random.Random()
+
+        self._generator = generator
 
     def _transform_reward(self, reward: Optional[int]) -> int:
         if reward is None:
@@ -129,9 +135,10 @@ class QLearningSimulation(TDLearning):
     def __init__(self, env: TicTacToe,
                  cross_policy: BasePolicy,
                  circle_policy: BasePolicy,
-                 path_to_state_file: str, **kwargs):
+                 path_to_state_file: str,
+                 generator: random.Random = None, **kwargs):
         super().__init__(env=env, cross_policy=cross_policy, circle_policy=circle_policy,
-                         path_to_state_file=path_to_state_file, **kwargs)
+                         path_to_state_file=path_to_state_file, generator=generator, **kwargs)
         self._alpha = kwargs["alpha"]
         self._gamma = kwargs["gamma"]
         self._is_q_player_make_step = False

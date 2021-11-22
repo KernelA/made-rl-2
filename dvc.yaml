@@ -12,7 +12,7 @@ stages:
   precompute-mcts-cross:
     vars:
       - out_dir: ./trees/mcts/4/cross
-    cmd: python ./precompute_mctc_tree.py out_dir=${out_dir} cross_policy.tree.env=\${env}
+    cmd: python ./precompute_mctc_tree.py out_dir=${out_dir} cross_policy.tree.env='\${env}'
     deps:
       - ./precompute_mctc_tree.py
       - ./configs/mcts_precompute.yaml
@@ -25,7 +25,7 @@ stages:
   precompute-mcts-circle:
     vars:
       - out_dir: ./trees/mcts/4/circle 
-    cmd: python ./precompute_mctc_tree.py out_dir=${out_dir} cross_policy=random circle_policy=mcts_tree circle_policy.tree.env=\${env}
+    cmd: python ./precompute_mctc_tree.py out_dir=${out_dir} cross_policy=random circle_policy=mcts_tree circle_policy.tree.env='\${env}'
     deps:
       - ./precompute_mctc_tree.py
       - ./configs/mcts_precompute.yaml
@@ -62,7 +62,7 @@ stages:
       - ./configs/simulate.yaml
       - out_dir: stat/cross_minmax_vs_random/
       - tree_file: ./trees/minmax/3/cross/3_3_3_start_1.pickle
-    cmd: python ./simulate_game.py -m cross_policy=tree_from_dump cross_policy.tree.path_to_file=\${hydra:runtime.cwd}/${tree_file} circle_policy=random random_action_proba=0.9,0.95,0.96,0.97,0.99 hydra.sweep.dir=${out_dir}
+    cmd: python ./simulate_game.py -m cross_policy=tree_from_dump cross_policy.tree.path_to_file='\${hydra:runtime.cwd}'/${tree_file} circle_policy=random random_action_proba=0.9,0.95,0.96,0.97,0.99 hydra.sweep.dir=${out_dir}
     deps:
       - ./simulate_game.py 
       - ./configs/simulate.yaml
@@ -75,7 +75,7 @@ stages:
       - ./configs/simulate.yaml
       - out_dir: stat/cross_random_vs_minmax/
       - tree_file: ./trees/minmax/3/cross/3_3_3_start_1.pickle
-    cmd: python ./simulate_game.py -m cross_policy=random circle_policy=tree_from_dump circle_policy.tree.path_to_file=\${hydra:runtime.cwd}/${tree_file} random_action_proba=0.7,0.75,0.85,0.9 hydra.sweep.dir=${out_dir}
+    cmd: python ./simulate_game.py -m cross_policy=random circle_policy=tree_from_dump circle_policy.tree.path_to_file='\${hydra:runtime.cwd}'/${tree_file} random_action_proba=0.7,0.75,0.85,0.9 hydra.sweep.dir=${out_dir}
     deps:
       - ./simulate_game.py 
       - ./configs/simulate.yaml
