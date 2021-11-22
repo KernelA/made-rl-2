@@ -1,16 +1,10 @@
-import pickle
 from abc import ABC, abstractmethod
 from typing import Tuple
 
 from anytree import NodeMixin
 
-from .contstants import PICKLE_PROTOCOL
 from .env import TicTacToe, ActionType
-
-
-def load_from_dump(path_to_file: str):
-    with open(path_to_file, "rb") as dump_file:
-        return pickle.load(dump_file)
+from .utils import load_from_dump, dump
 
 
 class GameTreeBase(ABC):
@@ -30,8 +24,7 @@ class GameTreeBase(ABC):
         pass
 
     def dump(self, path_to_file: str) -> None:
-        with open(path_to_file, "wb") as dump_file:
-            pickle.dump(self, dump_file, protocol=PICKLE_PROTOCOL)
+        dump(self, path_to_file)
 
     @ staticmethod
     def load_from_dump(path_to_file: str):

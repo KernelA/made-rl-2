@@ -2,23 +2,18 @@ hydra:
   run:
     dir: .
   sweep:
-    dir: stat/game_stats_simulation
+    dir: stat/cross_min_max_vs_random/game_stats_simulation
     subdir: ${hydra.job.num}_${random_action_proba}
 
 defaults:
-  - _self_
   - env: env3x3
   - cross_policy: from_dump
-  - circle_policy: from_dump
+  - circle_policy: random
   - override hydra/launcher: joblib
+  - _self_
 
 num_sim: 7000
 random_action_proba: 0
 metric_file: ./game_stat.json
 
-cross_policy:
-  tree:
-    path_to_file: ./trees/minmax/3/cross/3_3_3_start_1.pickle
-
-circle_policy:
-  tree: ${cross_policy.tree}
+train_config: null

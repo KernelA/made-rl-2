@@ -1,5 +1,5 @@
 stages:
-  precompute-tree:
+  precompute-minmax-tree:
     vars:
       - ./configs/minmax_precompute.yaml:out_dir
     cmd: python ./precompute_tree.py
@@ -11,8 +11,8 @@ stages:
 
   precompute-mcts-cross:
     vars:
-      - ./configs/mcts_precompute.yaml:out_dir
-    cmd: python ./precompute_mctc_tree.py cross_policy.tree.env=\${env}
+      - out_dir: ./trees/mcts/4/cross
+    cmd: python ./precompute_mctc_tree.py out_dir=${out_dir} cross_policy.tree.env=\${env}
     deps:
       - ./precompute_mctc_tree.py
       - ./configs/mcts_precompute.yaml
@@ -57,13 +57,28 @@ stages:
     outs:
       - ${out_path}
 
-  compute-minmax-game-stat:
+  compute-minmax-game-cross-stat:
     vars:
       - ./configs/simulate.yaml
-    cmd: python ./simpulate_game.py -m random_action_proba=0.1,0.15,0.25,0.3
+      - out_dir: stat/cross_minmax_vs_random/
+      - tree_file: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+    cmd: python ./simulate_game.py -m cross_policy=from_dump cross_policy.tree.path_to_file=\${hydra:runtime.cwd}/${tree_file} circle_policy=random random_action_proba=0.9,0.95,0.96,0.97,0.99 hydra.sweep.dir=${out_dir}
     deps:
-      - ./simpulate_game.py 
+      - ./simulate_game.py 
       - ./configs/simulate.yaml
-      - ./trees/minmax/3/cross/3_3_3_start_1.pickle
+      - ${tree_file}
     outs:
-      - ${hydra.sweep.dir}
+      - ${out_dir}
+    
+  compute-minmax-game-circle-random:
+    vars:
+      - ./configs/simulate.yaml
+      - out_dir: stat/cross_random_vs_minmax/
+      - tree_file: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+    cmd: python ./simulate_game.py -m cross_policy=random circle_policy=from_dump circle_policy.tree.path_to_file=\${hydra:runtime.cwd}/${tree_file} random_action_proba=0.9,0.95,0.96,0.97,0.99 hydra.sweep.dir=${out_dir}
+    deps:
+      - ./simulate_game.py 
+      - ./configs/simulate.yaml
+      - ${tree_file}
+    outs:
+      - ${out_dir}

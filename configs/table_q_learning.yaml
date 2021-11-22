@@ -21,9 +21,10 @@ learning_rate: 0.1
 gamma: 0.5
 num_train_iterations: 10
 num_test_iterations: 10
+num_valid_episodes: 10
 tree_random_action_proba: 0
 
-log_dir: ./exp/table_q_learning/logs/cross
+exp_dir: ./exp/table_q_learning/cross
 
 cross_policy:
   tree:

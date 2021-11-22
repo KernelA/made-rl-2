@@ -1,11 +1,23 @@
+from .contstants import PICKLE_PROTOCOL
 from collections import UserDict
 from typing import Dict
 import random
 import sys
+import pickle
 
 
 def get_seed() -> int:
     return random.randrange(sys.maxsize)
+
+
+def load_from_dump(path_to_file: str):
+    with open(path_to_file, "rb") as dump_file:
+        return pickle.load(dump_file)
+
+
+def dump(obj, path_to_file: str):
+    with open(path_to_file, "wb") as dump_file:
+        pickle.dump(obj, dump_file, protocol=PICKLE_PROTOCOL)
 
 
 class QTableDict(UserDict):

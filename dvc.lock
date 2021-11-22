@@ -97,3 +97,36 @@ stages:
     - path: ./stat/3/circle_stat.json
       md5: 2eeae758b45b5d9b10ef3488d441b136
       size: 70349
+  precompute-minmax-tree:
+    cmd: python ./precompute_tree.py
+    deps:
+    - path: ./configs/minmax_precompute.yaml
+      md5: 3a0af9561c281408ba362d73480452ad
+      size: 128
+    - path: ./precompute_tree.py
+      md5: b81e6a27da4e207f94751c7e914b981a
+      size: 760
+    outs:
+    - path: ./trees/minmax/3/cross
+      md5: a136f2b304d88f044b70c8ab52b9ad11.dir
+      size: 64100790
+      nfiles: 1
+  compute-minmax-game-circle-random:
+    cmd: python ./simpulate_game.py -m cross_policy=random circle_policy=from_dump
+      circle_policy.tree.path_to_file=${hydra:runtime.cwd}/trees/minmax/3/cross/3_3_3_start_1.pickle
+      random_action_proba=0.9,0.95,0.96,0.97,0.99 hydra.sweep.dir=stat/cross_random_vs_minmax/
+    deps:
+    - path: ./configs/simulate.yaml
+      md5: c206af68c2cd4409c0269f4e7de939b4
+      size: 381
+    - path: ./simpulate_game.py
+      md5: 429fd96f263e4b84bc93f9145b3bbc54
+      size: 1904
+    - path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+      md5: c813f1f0c7f387619e587fea9d5145f5
+      size: 64100790
+    outs:
+    - path: stat/cross_random_vs_minmax/
+      md5: d949edafd30ed5c4e48134a98a5c036b.dir
+      size: 28188
+      nfiles: 26
