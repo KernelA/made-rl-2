@@ -3,6 +3,7 @@ formatters:
   default_console_thread:
     (): log_set.utc_fromatter.ColoredUTCFormatter
     format: '%(log_color)s%(asctime)s %(levelname)s %(threadName)s %(module)s %(funcName)s %(message)s'
+    reset: true
     log_colors:
       DEBUG: 'cyan'
       INFO: 'green'
@@ -12,6 +13,7 @@ formatters:
   default_console_process:
     (): log_set.utc_fromatter.ColoredUTCFormatter
     format: '%(log_color)s%(asctime)s %(levelname)s %(processName)s %(module)s %(funcName)s %(message)s'
+    reset: true
     log_colors:
       DEBUG: 'cyan'
       INFO: 'green'

@@ -27,12 +27,9 @@ def main(config):
     if isinstance(circle_policy, TreePolicy):
         circle_policy.tree.set_random_proba(config.tree_random_action_proba)
 
-    generator = hydra.utils.instantiate(config.generator)
-
     q_learner = QLearningSimulation(env, cross_policy, circle_policy,
                                     config.path_to_state,
                                     is_learning=True,
-                                    generator=generator,
                                     gamma=config.gamma,
                                     alpha=config.learning_rate)
 

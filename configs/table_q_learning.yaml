@@ -7,25 +7,21 @@ hydra:
 
 defaults:
   - env: env3x3
-  - cross_policy: tree_from_dump
-  - circle_policy: q_learning
+  - cross_policy: q_learning
+  - circle_policy: tree_from_dump
   - override hydra/launcher: joblib
   - _self_
 
-path_to_state: ./stat/3/circle_stat.json
-generator:
-  _target_: random.Random
-  _args_:
-    - 786
+path_to_state: ./stat/3/cross_stat.json
 learning_rate: 0.1
 gamma: 0.5
-num_train_iterations: 10
-num_test_iterations: 10
-num_valid_episodes: 10
-tree_random_action_proba: 0
+num_train_iterations: 500_000
+num_test_iterations: 100
+num_valid_episodes: 10_000
+tree_random_action_proba: 0.99
 
 exp_dir: ./exp/table_q_learning/cross
 
-cross_policy:
+circle_policy:
   tree:
     path_to_file: ./trees/minmax/3/cross/3_3_3_start_1.pickle
