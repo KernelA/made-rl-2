@@ -4,12 +4,12 @@ import logging
 
 import hydra
 import tqdm
+import numpy as np
 from omegaconf import OmegaConf
 
 import log_set
 from tictac_rl import TreePolicy, simulate
-from tictac_rl.env import CIRCLE_PLAYER, CROSS_PLAYER, DRAW
-from tictac_rl.utils import load_from_dump
+from tictac_rl.utils import load_from_dump, compute_game_stat
 
 
 @hydra.main(config_path="configs", config_name="simulate")
@@ -35,16 +35,18 @@ def main(config):
 
     env = hydra.utils.instantiate(config.env)
 
-    rewards = []
+    rewards = np.zeros(config.num_sim, dtype=np.int8)
 
-    for _ in tqdm.trange(config.num_sim, miniters=500):
-        rewards.append(simulate(env, cross_policy, circle_policy))
+    for i in tqdm.trange(config.num_sim, miniters=500):
+        rewards[i] = simulate(env, cross_policy, circle_policy)
 
     metric_file = pathlib.Path(config.metric_file)
     metric_file.parent.mkdir(parents=True, exist_ok=True)
 
-    game_stat = {"cross_win": rewards.count(CROSS_PLAYER) / len(rewards), "circle_win": rewards.count(
-        CIRCLE_PLAYER) / len(rewards), "draw": rewards.count(DRAW) / len(rewards)}
+    stat = compute_game_stat(rewards)
+
+    game_stat = {"cross_fraction_win": stat.cross_win_fraction, "circle_fraction_win": stat.circle_win_fraction,
+                 "draw_fraction": stat.draw_fraction}
 
     logger.info("Save metric to %s", metric_file)
 
