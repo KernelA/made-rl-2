@@ -1,13 +1,28 @@
-from .contstants import PICKLE_PROTOCOL
-from collections import UserDict
+from collections import UserDict, namedtuple
 from typing import Dict
 import random
 import sys
 import pickle
 
+import numpy as np
+
+from .contstants import PICKLE_PROTOCOL
+from .env import CROSS_PLAYER, CIRCLE_PLAYER
+
+GameStat = namedtuple("GameStat", ["cross_win_fraction", "circle_win_fraction", "draw_fraction"])
+
 
 def get_seed() -> int:
     return random.randrange(sys.maxsize)
+
+
+def compute_game_stat(game_stat: np.ndarray) -> GameStat:
+    assert game_stat.ndim == 1
+    cross_win = np.count_nonzero(game_stat == CROSS_PLAYER) / game_stat.shape[0]
+    circle_win = np.count_nonzero(game_stat == CIRCLE_PLAYER) / game_stat.shape[0]
+    draw = max(1 - cross_win - circle_win, 0)
+
+    return GameStat(cross_win, circle_win, draw)
 
 
 def load_from_dump(path_to_file: str):
