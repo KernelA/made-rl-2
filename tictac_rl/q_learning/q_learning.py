@@ -1,20 +1,25 @@
-from typing import Sequence, Tuple, Optional
+from typing import Optional
 import random
 from collections import namedtuple
 from abc import ABC, abstractmethod
 import logging
 import json
+import sys
 
 import numpy as np
+
+from tictac_rl.env.tictac import DRAW
 
 from ..utils import QTableDict
 from ..env import TicTacToe, CIRCLE_PLAYER, CROSS_PLAYER, simulate, CallbackInfo
 from ..policies import BasePolicy, EpsilonGreedyPolicy
 
 from ..stat import StreamignMean
+from ..utils import GameStat, compute_game_stat
 
 TDLearningRes = namedtuple(
-    "TDLearningRes", ["mean_reward", "test_mean_rewards", "test_episodes"])
+    "TDLearningRes", ["mean_reward", "test_cross_win", "test_circle_win", "test_draw", "test_episode_num"])
+
 
 
 class TDLearning(ABC):
@@ -58,28 +63,33 @@ class TDLearning(ABC):
 
         self._generator = generator
 
-    def _transform_reward(self, reward: Optional[int]) -> int:
+    def _transform_reward(self, reward: Optional[int]) -> float:
+        """Map -1 0 1 to 0 0.5 1
+        """
         if reward is None:
             reward = 0
 
-        return self._q_player * reward
+        return 0.5 * (self._q_player * reward + 1)
+
+    def _inverse_transform_reward(self, reward: np.ndarray) -> np.ndarray:
+        return np.rint((self._q_player * reward) * 2 - 1)
 
     def _init_qtable(self, q_table: QTableDict):
         with open(self._path_to_state_file, "r", encoding="utf-8") as file:
             all_states_for_player = json.load(file)
 
         for state_str in all_states_for_player:
-            new_env = self._env.from_state_str(state_str)
+            # new_env = self._env.from_state_str(state_str)
 
             for int_action in all_states_for_player[state_str]:
-                _, reward, is_end = new_env.step(new_env.action_from_int(int_action))
+                # _, reward, is_end = new_env.step(new_env.action_from_int(int_action))
 
-                reward = self._transform_reward(reward)
+                # reward = self._transform_reward(reward)
 
-                q_table.set_value(state_str, int_action, reward)
+                q_table.set_value(state_str, int_action, 0.5)
 
-                if is_end:
-                    break
+                # if is_end:
+                #     break
 
     @abstractmethod
     def _update_q_function(self, info: CallbackInfo):
@@ -91,26 +101,27 @@ class TDLearning(ABC):
 
         return self._transform_reward(total_rewards)
 
-    def _evaluate(self, num_episodes: int):
+    def _evaluate(self, num_episodes: int) -> np.ndarray:
         self._is_learning = False
-        exp_rewards = StreamignMean()
+        game_stat = np.zeros(num_episodes, dtype=np.int8)
 
-        for _ in range(num_episodes):
-            reward = self._generate_episode()
-            exp_rewards.add_value(reward)
+        for i in range(num_episodes):
+            game_stat[i] = self._generate_episode()
 
-        return exp_rewards.mean()
+        return self._inverse_transform_reward(game_stat)
 
     def simulate(self, num_episodes: int, num_policy_exp: Optional[int] = None) -> TDLearningRes:
         self._init_qtable(self._q_table)
 
-        test_rewards = []
-        test_episode = []
+        test_cross_win = []
+        test_circle_win = []
+        test_draw = []
+        test_episode_num = []
 
         mean_train_reward = StreamignMean()
 
-        print_every = num_episodes // 10
-        compute_every = 4
+        print_every = num_episodes // 20
+        compute_every = 5
 
         for episode in range(num_episodes):
             self._is_learning = True
@@ -118,17 +129,25 @@ class TDLearning(ABC):
             mean_train_reward.add_value(reward)
 
             if num_policy_exp != -1 and num_policy_exp is not None and episode % compute_every == 0:
-                test_rewards.append(self._evaluate(num_policy_exp))
-                test_episode.append(episode)
+                game_stats = self._evaluate(num_policy_exp)
+                stat = compute_game_stat(game_stats)
+                test_cross_win.append(stat.cross_win_fraction)
+                test_circle_win.append(stat.circle_win_fraction)
+                test_draw.append(stat.draw_fraction)
+                test_episode_num.append(episode)
 
             if (episode + 1) % print_every == 0:
                 self._logger.info(f"Progress: {episode / num_episodes:.2%}")
 
         if num_policy_exp == -1:
-            test_rewards.append(self._evaluate(num_episodes))
-            test_episode.append(1)
+            game_stats = self._evaluate(num_policy_exp)
+            stat = compute_game_stat(game_stats)
+            test_cross_win.append(stat.cross_win_fraction)
+            test_circle_win.append(stat.circle_win_fraction)
+            test_draw.append(stat.draw_fraction)
+            test_episode_num.append(1)
 
-        return TDLearningRes(mean_train_reward.mean(), np.array(test_rewards), np.array(test_episode))
+        return TDLearningRes(mean_train_reward.mean(), test_cross_win, test_circle_win, test_draw, test_episode_num)
 
 
 class QLearningSimulation(TDLearning):
@@ -142,23 +161,31 @@ class QLearningSimulation(TDLearning):
         self._alpha = kwargs["alpha"]
         self._gamma = kwargs["gamma"]
         self._is_q_player_make_step = False
+        self._old_end_state = None
         kwargs.pop("alpha")
         kwargs.pop("gamma")
 
     def _update_q_function(self, callback_info: CallbackInfo):
-        if callback_info.action_player == self._is_q_player_make_step:
+        if callback_info.action_player == self._q_player and self._is_q_player_make_step:
             self._is_q_player_make_step = True
+            self._old_end_state = callback_info.old_env_state
+            return
 
         if self._is_learning and self._is_q_player_make_step and callback_info.action_player != self._q_player:
-            old_state = callback_info.old_env_state
+            old_state = self._old_end_state
             action = self._env.int_from_action(callback_info.action)
             new_state = callback_info.new_state
             reward = self._transform_reward(callback_info.reward)
 
-            old_value = self._q_table.get_value(old_state, action)
-            greedy_reward = self._gamma * max(self._q_table.get_actions(new_state).values())
-            self._q_table.set_value(old_state, action, old_value + self._alpha *
-                                    (reward + greedy_reward - old_value))
+            if callback_info.is_end:
+                self._q_table.set_value(old_state, action, reward)
+            else:
+                old_value = self._q_table.get_value(old_state, action)
+                greedy_reward = self._gamma * max(self._q_table.get_actions(new_state).values())
+                self._q_table.set_value(old_state, action, old_value + self._alpha *
+                                        (greedy_reward - old_value))
+
+            self._old_end_state = callback_info.new_state
 
 
 # class Sarsa(TDLearning):
