@@ -10,6 +10,10 @@ CIRCLE_PLAYER = -1
 CROSS_PLAYER = 1
 DRAW = 0
 
+CROSS_STR = str(CROSS_PLAYER + 1)
+CIRCLE_STR = str(CIRCLE_PLAYER + 1)
+FREE_STR = str(DRAW + 1)
+
 ActionType = Sequence[int]
 EnvStateType = Tuple[str, np.ndarray, int]
 GameState = Tuple[EnvStateType, Optional[int], bool]
@@ -93,9 +97,20 @@ class TicTacToe:
     def _change_turn(self):
         self.curTurn = -self.curTurn
 
-    def observation_space_values(self) -> Iterable[str]:
-        for str_repr in itertools.product('012', repeat=self.n_cols * self.n_rows):
-            yield "".join(str_repr)
+    def observation_space_values(self, int_player: int) -> Sequence[str]:
+        if int_player == CROSS_PLAYER:
+            yield EMPTY_STATE
+
+        for env_state in itertools.product((CROSS_STR, CIRCLE_STR, FREE_STR), repeat=self.n_cols * self.n_rows):
+            if int_player == CROSS_PLAYER:
+                if env_state.count(CIRCLE_STR) == env_state.count(CROSS_STR):
+                    yield "".join(env_state)
+            else:
+                cross_turns = env_state.count(CROSS_STR)
+                circle_turns = env_state.count(CIRCLE_STR)
+                if cross_turns - circle_turns in (0, 1):
+                    yield "".join(env_state)
+
 
     def _getHash(self):
         if self.boardHash is None:
@@ -113,9 +128,9 @@ class TicTacToe:
             board_repr += "\n" + '----' * (self.n_cols) + '-'
             out = '| '
             for j in range(self.n_cols):
-                if board[i, j] == 1:
+                if board[i, j] == CROSS_PLAYER:
                     token = 'x'
-                elif board[i, j] == -1:
+                elif board[i, j] == CIRCLE_PLAYER:
                     token = 'o'
                 else:
                     token = ' '

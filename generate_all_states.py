@@ -23,6 +23,7 @@ def main(config):
 
     is_save = config.start_player == env._start_player
 
+    # BUG: cross state not save 021202020
     def add_states(node):
         for child in node.children:
             possible_states[node.name].add(env.int_from_action(child.step))

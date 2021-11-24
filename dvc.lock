@@ -206,47 +206,40 @@ stages:
       md5: 479c86ef6f39d9dde2c58b75a55bedde
       size: 54063
   q-table-learning-train-cross:
-    cmd: python ./q_learn_params.py -m path_to_state='${hydra:runtime.cwd}'/./stat/3/cross_stat.json
-      circle_policy.tree.path_to_file='${hydra:runtime.cwd}'/./trees/minmax/3/cross/3_3_3_start_1.pickle
-      learning_rate=0.1,0.5,0.8 gamma=0.1,0.5,0.8 hydra.sweep.dir=./exp/table_q_learning/cross
+    cmd: python ./q_learn_params.py -m circle_policy.tree.path_to_file='${hydra:runtime.cwd}'/./trees/minmax/3/cross/3_3_3_start_1.pickle
+      learning_rate=0.5,0.8,0.9 gamma=0.1,0.5,0.8 hydra.sweep.dir=./exp/table_q_learning/cross
     deps:
     - path: ./configs/simulate.yaml
       md5: a4bb38cb6fbbff1569eebaecdee208b1
       size: 367
     - path: ./q_learn_params.py
-      md5: 2649f4d4b5a2e96d6e6ef8b13e774b4d
-      size: 3061
-    - path: ./stat/3/cross_stat.json
-      md5: 1866ae5ae57c0e2554ae12c89ddfaa65
-      size: 62234
+      md5: 624e26398193e193b494fbbe24ce9c58
+      size: 3433
     - path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
       md5: 3cc3797e6781edce02eb617756be9c97
       size: 64100756
     params:
       configs/table_q_learning.yaml:
-        num_test_iterations: 20
-        num_train_iterations: 20
-        num_valid_episodes: 20
+        num_test_iterations: 50
+        num_train_iterations: 20000
+        num_valid_episodes: 1000
         tree_random_action_proba: 0.09
     outs:
     - path: ./exp/table_q_learning/cross
-      md5: 53c6f9ef075bbafab448ea983e23dc54.dir
-      size: 591018357
+      md5: fc9b82241d3cf222b28aab8c50b89d67.dir
+      size: 596728297
       nfiles: 109
   q-table-learning-train-circle:
-    cmd: python ./q_learn_params.py -m path_to_state='${hydra:runtime.cwd}'/./stat/3/circle_stat.json
-      circle_policy=q_learning cross_policy=tree_from_dump cross_policy.tree.path_to_file='${hydra:runtime.cwd}'/./trees/minmax/3/cross/3_3_3_start_1.pickle
+    cmd: python ./q_learn_params.py -m circle_policy=q_learning cross_policy=tree_from_dump
+      cross_policy.tree.path_to_file='${hydra:runtime.cwd}'/./trees/minmax/3/cross/3_3_3_start_1.pickle
       learning_rate=0.1,0.5,0.8 gamma=0.1,0.5,0.8 hydra.sweep.dir=./exp/table_q_learning/circle
     deps:
     - path: ./configs/simulate.yaml
       md5: a4bb38cb6fbbff1569eebaecdee208b1
       size: 367
     - path: ./q_learn_params.py
-      md5: 2649f4d4b5a2e96d6e6ef8b13e774b4d
-      size: 3061
-    - path: ./stat/3/circle_stat.json
-      md5: 479c86ef6f39d9dde2c58b75a55bedde
-      size: 54063
+      md5: 6d4764d3f73b05344f0d81c8fec86901
+      size: 3082
     - path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
       md5: 3cc3797e6781edce02eb617756be9c97
       size: 64100756
@@ -258,6 +251,6 @@ stages:
         tree_random_action_proba: 0.09
     outs:
     - path: ./exp/table_q_learning/circle
-      md5: 9b39a7c17cbfc48405e92b95af3b3bc3.dir
-      size: 592293646
+      md5: 8d3bb3e41891c4097ec09e143c085acd.dir
+      size: 594361573
       nfiles: 109

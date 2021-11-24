@@ -9,6 +9,7 @@ from torch.utils.tensorboard import SummaryWriter
 from tictac_rl.env.simulate import simulate
 import log_set
 from tictac_rl import TreePolicy
+from tictac_rl.env.tictac import CIRCLE_PLAYER, CROSS_PLAYER, DRAW
 from tictac_rl.q_learning import QLearningSimulation
 from tictac_rl.utils import dump, compute_game_stat
 
@@ -30,7 +31,6 @@ def main(config):
         circle_policy.tree.set_random_proba(config.tree_random_action_proba)
 
     q_learner = QLearningSimulation(env, cross_policy, circle_policy,
-                                    config.path_to_state,
                                     is_learning=True,
                                     gamma=config.gamma,
                                     alpha=config.learning_rate)
@@ -50,11 +50,13 @@ def main(config):
 
     logger.info("Save logs to %s", log_dir)
 
-    with SummaryWriter(log_dir) as writer:
+    try:
         td_res = q_learner.simulate(config.num_train_iterations, config.num_test_iterations)
+    except TypeError:
+        logger.exception("exc")
 
+    with SummaryWriter(log_dir) as writer:
         train_mean_reward = td_res.mean_reward
-
         for cross_win, circle_win, draw, step in zip(td_res.test_cross_win, td_res.test_circle_win, td_res.test_draw, td_res.test_episode_num):
             writer.add_scalars("Train",
                                {"cross_win": cross_win, "circle_win": circle_win, "draw": draw},
@@ -69,14 +71,20 @@ def main(config):
 
         for i in range(config.num_valid_episodes):
             game_stat[i] = simulate(env, cross_policy, circle_policy)
+            # This state is busy. Fail
+            if game_stat[i] not in (CIRCLE_PLAYER, CROSS_PLAYER, DRAW):
+                if q_learner._q_player == CIRCLE_PLAYER:
+                    game_stat[i] = CROSS_PLAYER
+                else:
+                    game_stat[i] = CIRCLE_PLAYER
 
         stat = compute_game_stat(game_stat)
 
         writer.add_hparams({"gamma": config.gamma,
                             "alpha (learning rate)": config.learning_rate},
-                           {"cross win": stat.cross_win_fraction,
-                            "circle_win": stat.circle_win_fraction,
-                            "draw_win": stat.draw_fraction,
+                           {"valid_cross_win": stat.cross_win_fraction,
+                            "valid_circle_win": stat.circle_win_fraction,
+                            "valid_draw": stat.draw_fraction,
                             "train_mean_reward": train_mean_reward})
 
 

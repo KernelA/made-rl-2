@@ -7,6 +7,7 @@ import json
 import sys
 
 import numpy as np
+from tictac_rl.contstants import EMPTY_STATE
 
 from tictac_rl.env.tictac import DRAW
 
@@ -21,12 +22,10 @@ TDLearningRes = namedtuple(
     "TDLearningRes", ["mean_reward", "test_cross_win", "test_circle_win", "test_draw", "test_episode_num"])
 
 
-
 class TDLearning(ABC):
     def __init__(self, env: TicTacToe,
                  cross_policy: BasePolicy,
                  circle_policy: BasePolicy,
-                 path_to_state_file: str,
                  generator: random.Random = None,
                  **kwargs):
         self._env = env
@@ -39,13 +38,11 @@ class TDLearning(ABC):
 
         self._q_player = CROSS_PLAYER
 
-        self._path_to_state_file = path_to_state_file
+        # if "cross" in self._path_to_state_file and isinstance(self._circle_policy, EpsilonGreedyPolicy):
+        #     raise ValueError("State file does not correspond Q-player")
 
-        if "cross" in self._path_to_state_file and isinstance(self._circle_policy, EpsilonGreedyPolicy):
-            raise ValueError("State file does not correspond Q-player")
-
-        if "circle" in self._path_to_state_file and isinstance(self._cross_policy, EpsilonGreedyPolicy):
-            raise ValueError("State file does not correspond Q-player")
+        # if "circle" in self._path_to_state_file and isinstance(self._cross_policy, EpsilonGreedyPolicy):
+        #     raise ValueError("State file does not correspond Q-player")
 
         if isinstance(self._circle_policy, EpsilonGreedyPolicy):
             self._q_player = CIRCLE_PLAYER
@@ -75,21 +72,9 @@ class TDLearning(ABC):
         return np.rint((self._q_player * reward) * 2 - 1)
 
     def _init_qtable(self, q_table: QTableDict):
-        with open(self._path_to_state_file, "r", encoding="utf-8") as file:
-            all_states_for_player = json.load(file)
-
-        for state_str in all_states_for_player:
-            # new_env = self._env.from_state_str(state_str)
-
-            for int_action in all_states_for_player[state_str]:
-                # _, reward, is_end = new_env.step(new_env.action_from_int(int_action))
-
-                # reward = self._transform_reward(reward)
-
-                q_table.set_value(state_str, int_action, 0.5)
-
-                # if is_end:
-                #     break
+        for state_str in self._env.observation_space_values(self._q_player):
+            for action in self._env.from_state_str(state_str).getEmptySpaces():
+                q_table.set_value(state_str, self._env.int_from_action(action), 0.5)
 
     @abstractmethod
     def _update_q_function(self, info: CallbackInfo):
@@ -102,16 +87,30 @@ class TDLearning(ABC):
         return self._transform_reward(total_rewards)
 
     def _evaluate(self, num_episodes: int) -> np.ndarray:
-        self._is_learning = False
+        self.eval()
         game_stat = np.zeros(num_episodes, dtype=np.int8)
 
         for i in range(num_episodes):
             game_stat[i] = self._generate_episode()
+            # If reward is negative
+            if game_stat[i] not in (CIRCLE_PLAYER, CROSS_PLAYER, DRAW):
+                if self._q_player == CIRCLE_PLAYER:
+                    game_stat[i] = CROSS_PLAYER
+                else:
+                    game_stat[i] = CIRCLE_PLAYER
 
         return self._inverse_transform_reward(game_stat)
 
+    def train(self):
+        self._is_learning = True
+
+    def eval(self):
+        self._is_learning = False
+
     def simulate(self, num_episodes: int, num_policy_exp: Optional[int] = None) -> TDLearningRes:
         self._init_qtable(self._q_table)
+
+        assert len(self._q_table) > 0, "Empty qtable"
 
         test_cross_win = []
         test_circle_win = []
@@ -121,10 +120,10 @@ class TDLearning(ABC):
         mean_train_reward = StreamignMean()
 
         print_every = num_episodes // 20
-        compute_every = 5
+        compute_every = 100
 
         for episode in range(num_episodes):
-            self._is_learning = True
+            self.train()
             reward = self._generate_episode()
             mean_train_reward.add_value(reward)
 
@@ -154,26 +153,27 @@ class QLearningSimulation(TDLearning):
     def __init__(self, env: TicTacToe,
                  cross_policy: BasePolicy,
                  circle_policy: BasePolicy,
-                 path_to_state_file: str,
                  generator: random.Random = None, **kwargs):
-        super().__init__(env=env, cross_policy=cross_policy, circle_policy=circle_policy,
-                         path_to_state_file=path_to_state_file, generator=generator, **kwargs)
+        super().__init__(env=env, cross_policy=cross_policy,
+                         circle_policy=circle_policy, generator=generator, **kwargs)
         self._alpha = kwargs["alpha"]
         self._gamma = kwargs["gamma"]
         self._is_q_player_make_step = False
-        self._old_end_state = None
         kwargs.pop("alpha")
         kwargs.pop("gamma")
 
+    def train(self):
+        super().train()
+        self._is_q_player_make_step = False
+
     def _update_q_function(self, callback_info: CallbackInfo):
-        if callback_info.action_player == self._q_player and self._is_q_player_make_step:
+        if callback_info.action_player == self._q_player and not self._is_q_player_make_step:
             self._is_q_player_make_step = True
-            self._old_end_state = callback_info.old_env_state
             return
 
-        if self._is_learning and self._is_q_player_make_step and callback_info.action_player != self._q_player:
-            old_state = self._old_end_state
-            action = self._env.int_from_action(callback_info.action)
+        if self._is_learning and callback_info.action_player != self._q_player and self._is_q_player_make_step:
+            old_state = callback_info.old_env_state
+            action = self._env.int_from_action(callback_info.old_action)
             new_state = callback_info.new_state
             reward = self._transform_reward(callback_info.reward)
 
@@ -184,8 +184,6 @@ class QLearningSimulation(TDLearning):
                 greedy_reward = self._gamma * max(self._q_table.get_actions(new_state).values())
                 self._q_table.set_value(old_state, action, old_value + self._alpha *
                                         (greedy_reward - old_value))
-
-            self._old_end_state = callback_info.new_state
 
 
 # class Sarsa(TDLearning):

@@ -2,9 +2,12 @@ import random
 from abc import ABC, abstractmethod
 from typing import Optional
 
+import torch
+
 from ..env import TicTacToe, ActionType
 from ..utils import QTableDict
 from ..base_tree import GameTreeBase
+from ..nn import QNetwork, board_state2batch
 from ..contstants import EMPTY_STATE
 
 
@@ -67,6 +70,26 @@ class EpsilonGreedyPolicy(BasePolicy):
         best_action = self._generator.choice([action for action, value in self.q_function.get_actions(env_hash).items() if value == max_value])
 
         return env.action_from_int(best_action)
+
+    def reset(self):
+        pass
+
+
+class NetworkPolicy(BasePolicy):
+    def __init__(self, model: QNetwork, epsilon: float, seed: int):
+        super().__init__()
+        self._model = model
+        self._epislon = epsilon
+        self._generator = random.Random(seed)
+        self.seed = seed
+
+    @torch.no_grad()
+    def action(self, env: TicTacToe, env_hash: str) -> ActionType:
+        if self._generator.random() < self._epislon:
+            return random.choice(env.getEmptySpaces())
+
+        return env.action_from_int(self._model.best_action(board_state2batch(env.board))[0])
+
 
     def reset(self):
         pass
