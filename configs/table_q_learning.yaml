@@ -6,7 +6,7 @@ hydra:
     subdir: ${hydra.job.num}_alpha=${learning_rate}_gamma=${gamma}
 
   launcher:
-    n_jobs: 3
+    n_jobs: 14
 
 defaults:
   - env: env3x3
@@ -17,14 +17,10 @@ defaults:
 
 path_to_state: null
 learning_rate: 0.1
-gamma: 0.5
-num_train_iterations: 10
-num_test_iterations: 10
-num_valid_episodes: 10
-tree_random_action_proba: 0.99
+gamma: 0.2
+num_train_iterations: 1000
+num_test_iterations: 100
+num_valid_episodes: 2000
+tree_random_action_proba: 0.09
 
 exp_dir: .
-
-circle_policy:
-  tree:
-    path_to_file: null

@@ -2,13 +2,15 @@ import logging
 import pathlib
 
 import hydra
+import numpy as np
 from omegaconf import OmegaConf
 from torch.utils.tensorboard import SummaryWriter
 
+from tictac_rl.env.simulate import simulate
 import log_set
-from tictac_rl import TreePolicy, EpsilonGreedyPolicy
+from tictac_rl import TreePolicy
 from tictac_rl.q_learning import QLearningSimulation
-from tictac_rl.utils import dump
+from tictac_rl.utils import dump, compute_game_stat
 
 
 # TODO: debug simulation
@@ -51,25 +53,31 @@ def main(config):
     with SummaryWriter(log_dir) as writer:
         td_res = q_learner.simulate(config.num_train_iterations, config.num_test_iterations)
 
-        writer.add_hparams({"gamma": config.gamma,
-                            "alpha (learning rate)": config.learning_rate},
-                           {"mean_reward": td_res.mean_reward})
+        train_mean_reward = td_res.mean_reward
 
-        for step, value in zip(td_res.test_episodes, td_res.test_mean_rewards):
-            writer.add_scalar("Test/Mean reward", value, global_step=step)
+        for cross_win, circle_win, draw, step in zip(td_res.test_cross_win, td_res.test_circle_win, td_res.test_draw, td_res.test_episode_num):
+            writer.add_scalars("Train",
+                               {"cross_win": cross_win, "circle_win": circle_win, "draw": draw},
+                               global_step=step)
 
         dump(cross_policy, str(policy_dump / "cross.pickle"))
         dump(circle_policy, str(policy_dump / "circle.pickle"))
 
         logger.info("Validate on %d", config.num_valid_episodes)
 
-        td_res = q_learner.simulate(config.num_valid_episodes, -1)
-        value = td_res.test_mean_rewards[0]
-        step = td_res.test_episodes[0]
+        game_stat = np.zeros(config.num_valid_episodes, dtype=np.int8)
 
-        logger.info("valid mean reward %f", value)
+        for i in range(config.num_valid_episodes):
+            game_stat[i] = simulate(env, cross_policy, circle_policy)
 
-        writer.add_scalar("Valid/Mean reward", value, global_step=step)
+        stat = compute_game_stat(game_stat)
+
+        writer.add_hparams({"gamma": config.gamma,
+                            "alpha (learning rate)": config.learning_rate},
+                           {"cross win": stat.cross_win_fraction,
+                            "circle_win": stat.circle_win_fraction,
+                            "draw_win": stat.draw_fraction,
+                            "train_mean_reward": train_mean_reward})
 
 
 if __name__ == "__main__":
