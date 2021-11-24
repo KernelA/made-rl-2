@@ -28,11 +28,8 @@ def main(config):
             possible_states[node.name].add(env.int_from_action(child.step))
 
     for group in tqdm.tqdm(anytree.LevelOrderGroupIter(tree.root), total=tree.root.height):
-        for node in group:
-            if node.is_terminal:
-                possible_states[node.name] = set()
-
-            if is_save:
+        if is_save:
+            for node in group:
                 add_states(node)
 
         is_save = not is_save
