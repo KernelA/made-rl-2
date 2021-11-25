@@ -254,3 +254,43 @@ stages:
       md5: e4e89f60bda5f6613d3c5bd5b22ae64a.dir
       size: 595529234
       nfiles: 109
+  q-table-learning-train-cross-4x4:
+    cmd: python ./q_learn_params.py -m env=env4x4 num_train_iterations=500000 cross_policy=q_learning
+      circle_policy=random learning_rate=0.5,0.8,0.9 gamma=0.1,0.5,0.8 hydra.sweep.dir=./exp/table_q_learning/4/cross
+    deps:
+    - path: ./configs/simulate.yaml
+      md5: a4bb38cb6fbbff1569eebaecdee208b1
+      size: 367
+    - path: ./q_learn_params.py
+      md5: 8e37819a9e7be871206c80bcc753f9ac
+      size: 3407
+    params:
+      configs/table_q_learning.yaml:
+        num_test_iterations: 50
+        num_train_iterations: 20000
+        num_valid_episodes: 1000
+    outs:
+    - path: ./exp/table_q_learning/4/cross
+      md5: c695422fc67fda444c9d645c1b49e6d4.dir
+      size: 4424095901
+      nfiles: 109
+  q-table-learning-train-circle-4x4:
+    cmd: python ./q_learn_params.py -m env=env4x4 num_train_iterations=500000 circle_policy=q_learning
+      cross_policy=random learning_rate=0.5,0.8,0.9 gamma=0.1,0.5,0.8 hydra.sweep.dir=./exp/table_q_learning/4/circle
+    deps:
+    - path: ./configs/simulate.yaml
+      md5: a4bb38cb6fbbff1569eebaecdee208b1
+      size: 367
+    - path: ./q_learn_params.py
+      md5: 8e37819a9e7be871206c80bcc753f9ac
+      size: 3407
+    params:
+      configs/table_q_learning.yaml:
+        num_test_iterations: 50
+        num_train_iterations: 20000
+        num_valid_episodes: 1000
+    outs:
+    - path: ./exp/table_q_learning/4/circle
+      md5: 580e97060bf7a1c5be2a4e2fcb4365e1.dir
+      size: 8643761025
+      nfiles: 109
