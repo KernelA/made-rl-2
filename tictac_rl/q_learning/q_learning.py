@@ -19,20 +19,22 @@ from ..stat import StreamignMean
 from ..utils import GameStat, compute_game_stat
 
 TDLearningRes = namedtuple(
-    "TDLearningRes", ["mean_reward", "test_cross_win", "test_circle_win", "test_draw", "test_episode_num"])
+    "TDLearningRes", ["mean_reward"])
 
 
 class TDLearning(ABC):
-    def __init__(self, env: TicTacToe,
+    def __init__(self, *,
+                 env: TicTacToe,
                  cross_policy: BasePolicy,
                  circle_policy: BasePolicy,
                  q_player: int,
+                 writer: SummaryWriter,
                  generator: random.Random = None,
-                 **kwargs):
+                 is_learning: bool = True):
         self._env = env
         self._cross_policy = cross_policy
         self._circle_policy = circle_policy
-        self._is_learning = kwargs["is_learning"]
+        self._is_learning = is_learning
         self._logger = logging.getLogger("simulation")
 
         assert self._circle_policy is not self._cross_policy
@@ -48,6 +50,7 @@ class TDLearning(ABC):
             generator = random.Random()
 
         self._generator = generator
+        self._writer = writer
 
     def _transform_reward(self, reward: Optional[int]) -> float:
         """Map -1 0 1 to 0 0.5 1
@@ -111,11 +114,6 @@ class TDLearning(ABC):
     def simulate(self, num_episodes: int, num_policy_exp: Optional[int] = None) -> TDLearningRes:
         self._pre_init_sim()
 
-        test_cross_win = []
-        test_circle_win = []
-        test_draw = []
-        test_episode_num = []
-
         mean_train_reward = StreamignMean()
 
         print_every = num_episodes // 20
@@ -127,12 +125,16 @@ class TDLearning(ABC):
             mean_train_reward.add_value(reward)
 
             if num_policy_exp != -1 and num_policy_exp is not None and episode % compute_every == 0:
+
+
                 game_stats = self._evaluate(num_policy_exp)
                 stat = compute_game_stat(game_stats)
-                test_cross_win.append(stat.cross_win_fraction)
-                test_circle_win.append(stat.circle_win_fraction)
-                test_draw.append(stat.draw_fraction)
-                test_episode_num.append(episode)
+
+                self._writer.add_scalars("Train",
+                               {"cross_win": stat.cross_win_fraction,
+                               "circle_win": stat.circle_win_fraction,
+                               "draw": stat.draw_fraction},
+                               global_step=episode)
 
             if (episode + 1) % print_every == 0:
                 self._logger.info(f"Progress: {episode / num_episodes:.2%}")
@@ -140,19 +142,26 @@ class TDLearning(ABC):
         if num_policy_exp == -1:
             game_stats = self._evaluate(num_policy_exp)
             stat = compute_game_stat(game_stats)
-            test_cross_win.append(stat.cross_win_fraction)
-            test_circle_win.append(stat.circle_win_fraction)
-            test_draw.append(stat.draw_fraction)
-            test_episode_num.append(1)
 
-        return TDLearningRes(mean_train_reward.mean(), test_cross_win, test_circle_win, test_draw, test_episode_num)
+            self._writer.add_scalars("Valid_after_training",
+                               {"cross_win": stat.cross_win_fraction,
+                               "circle_win": stat.circle_win_fraction,
+                               "draw": stat.draw_fraction},
+                               global_step=1)
+
+        return TDLearningRes(mean_train_reward.mean())
 
 
 class QLearningSimulation(TDLearning):
-    def __init__(self, env: TicTacToe,
+    def __init__(self, *,
+                 env: TicTacToe,
                  cross_policy: BasePolicy,
                  circle_policy: BasePolicy,
-                 generator: random.Random = None, **kwargs):
+                 writer: SummaryWriter,
+                 alpha: float,
+                 gamma: float,
+                 is_learning: bool,
+                 generator: random.Random = None):
 
         q_player = CROSS_PLAYER
 
@@ -162,14 +171,12 @@ class QLearningSimulation(TDLearning):
         else:
             self._q_table = cross_policy.q_function
 
-        self._alpha = kwargs["alpha"]
-        self._gamma = kwargs["gamma"]
+        self._alpha = alpha
+        self._gamma = gamma
         self._is_q_player_make_step = False
-        kwargs.pop("alpha")
-        kwargs.pop("gamma")
 
-        super().__init__(env=env, cross_policy=cross_policy, q_player=q_player,
-                         circle_policy=circle_policy, generator=generator, **kwargs)
+        super().__init__(env=env, cross_policy=cross_policy, q_player=q_player, is_learning=is_learning,
+                         circle_policy=circle_policy, generator=generator, writer=writer)
 
 
     def _pre_init_sim(self):
@@ -205,7 +212,9 @@ class QLearningSimulation(TDLearning):
 
 
 class QNeuralNetworkSimulation(TDLearning):
-    def __init__(self, env: TicTacToe,
+    def __init__(self,
+        *,
+        env: TicTacToe,
         cross_policy: BasePolicy,
         circle_policy: BasePolicy,
         optimizer,
@@ -213,9 +222,10 @@ class QNeuralNetworkSimulation(TDLearning):
         batch_size: int,
         device,
         writer: SummaryWriter,
+        gamma: float,
+        is_learning: bool,
         scheduler = None,
-        generator: random.Random = None,
-        **kwargs):
+        generator: random.Random = None):
 
         self._device = device
         q_player = CROSS_PLAYER
@@ -231,9 +241,9 @@ class QNeuralNetworkSimulation(TDLearning):
         self._batch_size = batch_size
         self._optimizer = optimizer
         self._scheduler = scheduler
-        self._gamma = kwargs["gamma"]
+        self._gamma = gamma
         self._is_q_player_make_step = False
-        super().__init__(env, cross_policy, circle_policy, q_player, generator=generator, **kwargs)
+        super().__init__(env=env, cross_policy=cross_policy, circle_policy=circle_policy, is_learning=is_learning, q_player=q_player, writer=writer, generator=generator)
 
     def _pre_init_sim(self):
         pass

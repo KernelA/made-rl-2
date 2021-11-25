@@ -3,7 +3,7 @@ hydra:
     dir: .
   sweep:
     dir: ./exp/table_q_learning/cross
-    subdir: ${hydra.job.num}_alpha=${learning_rate}_gamma=${gamma}
+    subdir: ${hydra.job.num}_alpha=${q_learner.alpha}_gamma=${q_learner.gamma}
 
   launcher:
     n_jobs: 12
@@ -15,11 +15,16 @@ defaults:
   - override hydra/launcher: joblib
   - _self_
 
-learning_rate: 0.1
-gamma: 0.2
-num_train_iterations: 20000
+
+q_learner:
+  _target_: tictac_rl.q_learning.q_learning.QLearningSimulation
+  is_learning: true
+  alpha: 0.1
+  gamma: 0.2
+
+num_train_iterations: 100
 num_test_iterations: 50
-num_valid_episodes: 1000
+num_valid_episodes: 100
 tree_random_action_proba: 0.09
 
 exp_dir: .

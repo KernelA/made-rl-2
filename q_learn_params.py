@@ -11,6 +11,8 @@ import log_set
 from tictac_rl import TreePolicy
 from tictac_rl.env.tictac import CIRCLE_PLAYER, CROSS_PLAYER, DRAW
 from tictac_rl.q_learning import QLearningSimulation
+from tictac_rl.policies.policy import NetworkPolicy
+from tictac_rl.q_learning.q_learning import TDLearning
 from tictac_rl.utils import dump, compute_game_stat
 
 
@@ -29,10 +31,6 @@ def main(config):
     if isinstance(circle_policy, TreePolicy):
         circle_policy.tree.set_random_proba(config.tree_random_action_proba)
 
-    q_learner = QLearningSimulation(env, cross_policy, circle_policy,
-                                    is_learning=True,
-                                    gamma=config.gamma,
-                                    alpha=config.learning_rate)
 
     logger.info("Exp dir %s", config.exp_dir)
     exp_dir = pathlib.Path(config.exp_dir)
@@ -49,17 +47,33 @@ def main(config):
 
     logger.info("Save logs to %s", log_dir)
 
-    try:
-        td_res = q_learner.simulate(config.num_train_iterations, config.num_test_iterations)
-    except TypeError:
-        logger.exception("exc")
+    add_args = dict()
+
+    if "optimizer" in config:
+        if isinstance(cross_policy, NetworkPolicy):
+            optimizer = hydra.utils.instantiate(config.optimizer, cross_policy._model.parameters())
+            add_args["optimizer"] = optimizer
+        elif isinstance(circle_policy, NetworkPolicy):
+            optimizer = hydra.utils.instantiate(config.optimizer, circle_policy._model.parameters())
+            add_args["optimizer"] = optimizer
+
 
     with SummaryWriter(log_dir) as writer:
+        q_learner: TDLearning = hydra.utils.instantiate(
+            config.q_learner,
+            env=env,
+            cross_policy=cross_policy,
+            circle_policy=circle_policy,
+            writer=writer,
+            **add_args)
+
+        try:
+            td_res = q_learner.simulate(config.num_train_iterations, config.num_test_iterations)
+        except TypeError:
+            logger.exception("Unexpected exception")
+            return
+
         train_mean_reward = td_res.mean_reward
-        for cross_win, circle_win, draw, step in zip(td_res.test_cross_win, td_res.test_circle_win, td_res.test_draw, td_res.test_episode_num):
-            writer.add_scalars("Train",
-                               {"cross_win": cross_win, "circle_win": circle_win, "draw": draw},
-                               global_step=step)
 
         dump(cross_policy, str(policy_dump / "cross.pickle"))
         dump(circle_policy, str(policy_dump / "circle.pickle"))
@@ -79,9 +93,9 @@ def main(config):
 
         stat = compute_game_stat(game_stat)
 
-        writer.add_hparams({"gamma": config.gamma,
-                            "alpha (learning rate)": config.learning_rate},
-                           {"valid_cross_win": stat.cross_win_fraction,
+        writer.add_hparams({"gamma": config.q_learner.gamma,
+                            "alpha (learning rate)": config.q_learner.alpha},
+                        {"valid_cross_win": stat.cross_win_fraction,
                             "valid_circle_win": stat.circle_win_fraction,
                             "valid_draw": stat.draw_fraction,
                             "train_mean_reward": train_mean_reward})
