@@ -25,7 +25,7 @@ def test_all_draw():
     assert stat.circle_win_fraction == 0
     assert stat.draw_fraction == 1
 
-def test_all_draw():
+def test_random_draw():
     stat = compute_game_stat(np.array((CROSS_PLAYER, CROSS_PLAYER, CIRCLE_PLAYER, DRAW)))
     assert stat.cross_win_fraction == 0.5
     assert stat.circle_win_fraction == 0.25

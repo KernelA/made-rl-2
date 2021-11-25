@@ -1,0 +1,37 @@
+hydra:
+  run:
+    dir: .
+  sweep:
+    dir: ./exp/dqn_learning/cross
+    subdir: ${hydra.job.num}_alpha=${learning_rate}_gamma=${gamma}
+
+  launcher:
+    n_jobs: 12
+
+defaults:
+  - env: env3x3
+  - cross_policy: network_policy
+  - circle_policy: random
+  - optimizer: adam
+  - override hydra/launcher: joblib
+  - _self_
+
+cross_policy:
+  model:
+    n_row: ${env.n_rows}
+    n_cols: ${env.n_cols}
+
+q_learner:
+  _target_: tictac_rl.q_learning.q_learning.QNeuralNetworkSimulation
+  memory_capacity: 10000
+  batch_size: 128
+  device: 'cuda'
+  gamma: 0.2
+  is_learning: true
+
+num_train_iterations: 20000
+num_test_iterations: 50
+num_valid_episodes: 1000
+tree_random_action_proba: 0.09
+
+exp_dir: .

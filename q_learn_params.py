@@ -14,7 +14,6 @@ from tictac_rl.q_learning import QLearningSimulation
 from tictac_rl.utils import dump, compute_game_stat
 
 
-# TODO: debug simulation
 @hydra.main(config_path="configs", config_name="table_q_learning")
 def main(config):
     logger = logging.getLogger()
@@ -73,7 +72,7 @@ def main(config):
             game_stat[i] = simulate(env, cross_policy, circle_policy)
             # This state is busy. Fail
             if game_stat[i] not in (CIRCLE_PLAYER, CROSS_PLAYER, DRAW):
-                if q_learner._q_player == CIRCLE_PLAYER:
+                if q_learner.q_player == CIRCLE_PLAYER:
                     game_stat[i] = CROSS_PLAYER
                 else:
                     game_stat[i] = CIRCLE_PLAYER

@@ -9,6 +9,7 @@ from ..contstants import EMPTY_STATE
 CIRCLE_PLAYER = -1
 CROSS_PLAYER = 1
 DRAW = 0
+BAD_REWARD = -10
 
 CROSS_STR = str(CROSS_PLAYER + 1)
 CIRCLE_STR = str(CIRCLE_PLAYER + 1)
@@ -150,11 +151,15 @@ class TicTacToe:
 
     def step(self, action: ActionType) -> GameState:
         if self.board[action[0], action[1]] != 0:
-            return self.getState(), -10, True
+            return self.getState(), BAD_REWARD, True
         self._makeMove(self.curTurn, action[0], action[1])
         reward = self.isTerminal()
         self._change_turn()
         return self.getState(), 0 if reward is None else reward, reward is not None
+
+    @staticmethod
+    def env_state_str2board(env_state: str) -> np.ndarray:
+        return np.array(tuple(map(int, env_state)), dtype=np.int8) - 1
 
     def from_state_str(self, state_str: str) -> "TicTacToe":
         new_env = self.clone()
@@ -162,7 +167,7 @@ class TicTacToe:
         if state_str == EMPTY_STATE:
             new_env.board = np.zeros_like(self.board)
         else:
-            new_env.board = np.array(tuple(map(int, state_str)), dtype=self.board.dtype) - 1
+            new_env.board = self.env_state_str2board(state_str)
 
         counts = new_env.board.size - np.count_nonzero(new_env.board == np.int8(0))
         new_env.curTurn = int(self._start_player)

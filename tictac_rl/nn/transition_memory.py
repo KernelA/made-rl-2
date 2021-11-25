@@ -1,7 +1,7 @@
 import random
 from collections import namedtuple, deque
 
-Transition = namedtuple("Transition", ["state", "action", "next_state", "reward"])
+Transition = namedtuple("Transition", ["state", "action", "next_state", "reward", "is_end"])
 
 
 class ReplayMemory:
@@ -12,10 +12,10 @@ class ReplayMemory:
         self._generator = generator
         self.memory = deque([], maxlen=capacity)
 
-    def push(self, state: str, action: int, next_state: str, reward: float):
+    def push(self, state: str, action: int, next_state: str, reward: float, is_end: bool):
         """Save a transition
         """
-        self.memory.append(Transition(state, action, next_state, reward))
+        self.memory.append(Transition(state, action, next_state, reward, is_end))
 
     def sample(self, batch_size):
         return self._generator.sample(self.memory, batch_size)
