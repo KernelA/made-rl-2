@@ -10,7 +10,7 @@ class ReplayMemory:
             generator = random.Random()
 
         self._generator = generator
-        self.memory = deque([], maxlen=capacity)
+        self.memory = deque(maxlen=capacity)
 
     def push(self, state: str, action: int, next_state: str, reward: float, is_end: bool):
         """Save a transition

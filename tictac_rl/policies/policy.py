@@ -1,6 +1,7 @@
 import random
 from abc import ABC, abstractmethod
 from typing import Optional
+import numpy
 
 import torch
 
@@ -88,8 +89,11 @@ class NetworkPolicy(BasePolicy):
         if self._generator.random() < self._epislon:
             return random.choice(env.getEmptySpaces())
 
-        return env.action_from_int(self._model.best_action(board_state2batch(env.board))[0])
+        self._model.eval()
+        int_actions = list(map(env.int_from_action, env.getEmptySpaces()))
+        best_action_index = self._model(board_state2batch(env.board))[:, int_actions].argmax(dim=-1).cpu().item()
 
+        return env.action_from_int(int_actions[best_action_index])
 
     def reset(self):
         pass

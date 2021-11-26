@@ -12,6 +12,7 @@ defaults:
   - env: env3x3
   - cross_policy: q_learning
   - circle_policy: tree_from_dump
+  - optimizer: rmspop
   - override hydra/launcher: joblib
   - _self_
 
@@ -22,9 +23,9 @@ q_learner:
   alpha: 0.1
   gamma: 0.2
 
-num_train_iterations: 100
+num_train_iterations: 20000
 num_test_iterations: 50
-num_valid_episodes: 100
+num_valid_episodes: 1000
 tree_random_action_proba: 0.09
 
 exp_dir: .

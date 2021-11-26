@@ -15,6 +15,7 @@ from ..utils import QTableDict
 from ..env import TicTacToe, CIRCLE_PLAYER, CROSS_PLAYER, DRAW, simulate, CallbackInfo, BAD_REWARD
 from ..policies import BasePolicy, EpsilonGreedyPolicy, NetworkPolicy
 from ..nn.transition_memory import ReplayMemory, Transition
+from ..nn import DuelingNetwork
 from ..stat import StreamignMean
 from ..utils import GameStat, compute_game_stat
 
@@ -101,7 +102,7 @@ class TDLearning(ABC):
 
         return game_stat
 
-    def train(self):
+    def train(self, num_episode: int):
         self._is_learning = True
 
     def eval(self):
@@ -120,13 +121,11 @@ class TDLearning(ABC):
         compute_every = 100
 
         for episode in range(num_episodes):
-            self.train()
+            self.train(episode)
             reward = self._transform_reward(self._generate_episode())
             mean_train_reward.add_value(reward)
 
             if num_policy_exp != -1 and num_policy_exp is not None and episode % compute_every == 0:
-
-
                 game_stats = self._evaluate(num_policy_exp)
                 stat = compute_game_stat(game_stats)
 
@@ -182,8 +181,8 @@ class QLearningSimulation(TDLearning):
     def _pre_init_sim(self):
         self._init_qtable(self._q_table)
 
-    def train(self):
-        super().train()
+    def train(self, num_episode: int):
+        super().train(num_episode)
         self._is_q_player_make_step = False
 
     def _init_qtable(self, q_table: QTableDict):
@@ -211,6 +210,7 @@ class QLearningSimulation(TDLearning):
                                         (greedy_reward - old_value))
 
 
+
 class QNeuralNetworkSimulation(TDLearning):
     def __init__(self,
         *,
@@ -222,18 +222,23 @@ class QNeuralNetworkSimulation(TDLearning):
         batch_size: int,
         device,
         writer: SummaryWriter,
+        alpha: float,
         gamma: float,
         is_learning: bool,
         scheduler = None,
         generator: random.Random = None):
 
+        for param_group in optimizer.param_groups:
+            if "lr" in param_group:
+                assert alpha == param_group["lr"], "alpha and learning rate of optimizer must be same"
+
         self._device = device
         q_player = CROSS_PLAYER
-        self._q_network: NetworkPolicy = self._cross_policy
+        self._q_network: NetworkPolicy = cross_policy
 
         if isinstance(circle_policy, NetworkPolicy):
             q_player = CIRCLE_PLAYER
-            self._q_network = self._circle_policy
+            self._q_network = circle_policy
 
         self._writer = writer
 
@@ -243,19 +248,21 @@ class QNeuralNetworkSimulation(TDLearning):
         self._scheduler = scheduler
         self._gamma = gamma
         self._is_q_player_make_step = False
+        self._num_step = 0
         super().__init__(env=env, cross_policy=cross_policy, circle_policy=circle_policy, is_learning=is_learning, q_player=q_player, writer=writer, generator=generator)
 
     def _pre_init_sim(self):
         pass
 
-    def train(self):
-        super().train()
+    def train(self, num_episode):
+        super().train(num_episode)
         self._is_q_player_make_step = False
 
     def _train_model(self):
         if len(self._memory) < self._batch_size:
             return
 
+        self._q_network._model.train()
         transitions = self._memory.sample(self._batch_size)
 
         # Transpose the batch (see https://stackoverflow.com/a/19343/3343043 for
@@ -265,17 +272,17 @@ class QNeuralNetworkSimulation(TDLearning):
 
         # Compute a mask of non-final states and concatenate the batch elements
         # (a final state would've been the one after which simulation ended)
-        non_final_mask = torch.tensor(batch.is_end, device=self._device, dtype=torch.bool)
+        non_final_mask = torch.tensor(tuple(map(lambda x: not x, batch.is_end)), device=self._device, dtype=torch.bool)
 
         non_final_next_states = board_state_str2batch(batch.next_state, self._env.n_rows, self._env.n_cols)[non_final_mask].to(self._device)
-        state_batch = torch.tensor(batch.state, device=self._device)
+        state_batch = board_state_str2batch(batch.state, self._env.n_rows, self._env.n_cols).to(self._device)
         action_batch = torch.tensor(batch.action, device=self._device)
         reward_batch = torch.tensor(batch.reward, device=self._device)
 
         # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
         # columns of actions taken. These are the actions which would've been taken
         # for each batch state according to policy_net
-        state_action_values = self._q_network._model(state_batch).gather(1, action_batch)
+        state_action_values = self._q_network._model(state_batch).gather(1, action_batch.reshape(-1, 1))
 
         next_stat_values = torch.zeros(self._batch_size, device=self._device)
         next_stat_values[non_final_mask] = self._q_network._model(non_final_next_states).max(dim=-1)[0].detach()
@@ -284,11 +291,13 @@ class QNeuralNetworkSimulation(TDLearning):
 
         self._optimizer.zero_grad()
 
-        loss = F.smooth_l1_loss(state_action_values, expected_q_function)
-
+        loss = F.smooth_l1_loss(state_action_values.view(-1), expected_q_function)
         loss.backward()
-        torch.nn.utils.clip_grad(self._model.parameters())
+        self._writer.add_scalar("Train/L1_loss", loss.item(), global_step=self._num_step)
+        torch.nn.utils.clip_grad.clip_grad_value_(self._q_network._model.parameters(), 1)
         self._optimizer.step()
+        self._num_step += 1
+
 
     def _update_q_function(self, callback_info: CallbackInfo):
         if callback_info.action_player == self.q_player and not self._is_q_player_make_step:
@@ -304,3 +313,117 @@ class QNeuralNetworkSimulation(TDLearning):
             self._memory.push(old_state, action, new_state, reward, callback_info.is_end)
             self._train_model()
 
+
+class DuelingQNeuralNetworkSimulation(TDLearning):
+    def __init__(self,
+        *,
+        env: TicTacToe,
+        cross_policy: BasePolicy,
+        circle_policy: BasePolicy,
+        optimizer,
+        memory_capacity: int,
+        batch_size: int,
+        device,
+        writer: SummaryWriter,
+        alpha: float,
+        gamma: float,
+        is_learning: bool,
+        target_update: int,
+        scheduler = None,
+        generator: random.Random = None):
+
+        for param_group in optimizer.param_groups:
+            if "lr" in param_group:
+                assert alpha == param_group["lr"], "alpha and learning rate of optimizer must be same"
+
+        self._device = device
+        q_player = CROSS_PLAYER
+
+        if isinstance(cross_policy, NetworkPolicy):
+            assert isinstance(cross_policy._model, DuelingNetwork)
+            self._q_network: DuelingNetwork = cross_policy._model
+        elif isinstance(circle_policy, NetworkPolicy):
+            assert isinstance(circle_policy._model, DuelingNetwork)
+            self._q_network: DuelingNetwork = cross_policy._model
+            q_player = CIRCLE_PLAYER
+            self._q_network = circle_policy
+
+        if isinstance(cross_policy, NetworkPolicy) and isinstance(circle_policy, NetworkPolicy):
+            raise ValueError("Cannot train both networks: circle and cross")
+
+        self._writer = writer
+        self._target_update = target_update
+
+        self._memory = ReplayMemory(capacity=memory_capacity, generator=generator)
+        self._batch_size = batch_size
+        self._optimizer = optimizer
+        self._scheduler = scheduler
+        self._gamma = gamma
+        self._is_q_player_make_step = False
+        self._num_step = 0
+        super().__init__(env=env, cross_policy=cross_policy, circle_policy=circle_policy, is_learning=is_learning, q_player=q_player, writer=writer, generator=generator)
+
+    def _pre_init_sim(self):
+        pass
+
+    def train(self, num_episode):
+        super().train(num_episode)
+        self._is_q_player_make_step = False
+
+        if num_episode % self._target_update:
+            self._q_network.update_target_network()
+
+    def _train_model(self):
+        if len(self._memory) < self._batch_size:
+            return
+
+        self._q_network.train()
+        transitions = self._memory.sample(self._batch_size)
+
+        # Transpose the batch (see https://stackoverflow.com/a/19343/3343043 for
+        # detailed explanation). This converts batch-array of Transitions
+        # to Transition of batch-arrays.
+        batch = Transition(*zip(*transitions))
+
+        # Compute a mask of non-final states and concatenate the batch elements
+        # (a final state would've been the one after which simulation ended)
+        non_final_mask = torch.tensor(tuple(map(lambda x: not x, batch.is_end)), device=self._device, dtype=torch.bool)
+
+        non_final_next_states = board_state_str2batch(batch.next_state, self._env.n_rows, self._env.n_cols)[non_final_mask].to(self._device)
+        state_batch = board_state_str2batch(batch.state, self._env.n_rows, self._env.n_cols).to(self._device)
+        action_batch = torch.tensor(batch.action, device=self._device)
+        reward_batch = torch.tensor(batch.reward, device=self._device)
+
+        # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
+        # columns of actions taken. These are the actions which would've been taken
+        # for each batch state according to policy_net
+        state_action_values = self._q_network.policy_network(state_batch).gather(1, action_batch.reshape(-1, 1))
+
+        next_stat_values = torch.zeros(self._batch_size, device=self._device)
+        next_stat_values[non_final_mask] = self._q_network.target_network(non_final_next_states).max(dim=-1)[0].detach()
+
+        expected_q_function = self._gamma * next_stat_values + reward_batch
+
+        self._optimizer.zero_grad()
+
+        loss = F.smooth_l1_loss(state_action_values.view(-1), expected_q_function)
+        loss.backward()
+        self._writer.add_scalar("Train/L1_loss", loss.item(), global_step=self._num_step)
+        torch.nn.utils.clip_grad.clip_grad_value_(self._q_network._model.parameters(), 1)
+        self._optimizer.step()
+        self._num_step += 1
+
+
+    def _update_q_function(self, callback_info: CallbackInfo):
+        if callback_info.action_player == self.q_player and not self._is_q_player_make_step:
+            self._is_q_player_make_step = True
+            return
+
+        if self._is_learning and callback_info.action_player != self.q_player and self._is_q_player_make_step:
+            old_state = callback_info.old_env_state
+            action = self._env.int_from_action(callback_info.old_action)
+            new_state = callback_info.new_state
+            reward = self._transform_reward(callback_info.reward)
+
+            self._memory.push(old_state, action, new_state, reward, callback_info.is_end)
+            self._train_model()

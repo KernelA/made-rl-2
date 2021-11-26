@@ -38,9 +38,6 @@ def simulate(env: TicTacToe, cross_policy: BasePolicy, circle_policy: BasePolicy
         (state_str, *_), reward, is_end = env.step(step)
 
         if callback is not None:
-            try:
-                callback(CallbackInfo(old_cross_state if old_turn == CIRCLE_PLAYER else old_circle_state, circle_step if old_turn == CROSS_PLAYER else cross_step, state_str, reward, old_turn, is_end))
-            except TypeError:
-                pass
+            callback(CallbackInfo(old_cross_state if old_turn == CIRCLE_PLAYER else old_circle_state, circle_step if old_turn == CROSS_PLAYER else cross_step, state_str, reward, old_turn, is_end))
         if is_end:
             return reward

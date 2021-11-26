@@ -158,16 +158,16 @@ class TicTacToe:
         return self.getState(), 0 if reward is None else reward, reward is not None
 
     @staticmethod
-    def env_state_str2board(env_state: str) -> np.ndarray:
+    def env_state_str2board(env_state: str, n_rows: int, n_cols: int) -> np.ndarray:
+        if env_state == EMPTY_STATE:
+            return np.zeros(n_rows * n_cols, dtype=np.int8)
+
         return np.array(tuple(map(int, env_state)), dtype=np.int8) - 1
 
     def from_state_str(self, state_str: str) -> "TicTacToe":
         new_env = self.clone()
 
-        if state_str == EMPTY_STATE:
-            new_env.board = np.zeros_like(self.board)
-        else:
-            new_env.board = self.env_state_str2board(state_str)
+        new_env.board = self.env_state_str2board(state_str, self.n_rows, self.n_cols)
 
         counts = new_env.board.size - np.count_nonzero(new_env.board == np.int8(0))
         new_env.curTurn = int(self._start_player)

@@ -51,9 +51,11 @@ def main(config):
 
     if "optimizer" in config:
         if isinstance(cross_policy, NetworkPolicy):
+            cross_policy._model.to(config.q_learner.device)
             optimizer = hydra.utils.instantiate(config.optimizer, cross_policy._model.parameters())
             add_args["optimizer"] = optimizer
         elif isinstance(circle_policy, NetworkPolicy):
+            circle_policy._model.to(config.q_learner.device)
             optimizer = hydra.utils.instantiate(config.optimizer, circle_policy._model.parameters())
             add_args["optimizer"] = optimizer
 
@@ -69,7 +71,7 @@ def main(config):
 
         try:
             td_res = q_learner.simulate(config.num_train_iterations, config.num_test_iterations)
-        except TypeError:
+        except Exception:
             logger.exception("Unexpected exception")
             return
 
