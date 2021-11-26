@@ -9,6 +9,7 @@ from omegaconf import OmegaConf
 
 import log_set
 from tictac_rl import TreePolicy, simulate
+from tictac_rl.env import CROSS_PLAYER, CIRCLE_PLAYER, DRAW
 from tictac_rl.utils import load_from_dump, compute_game_stat
 
 
@@ -27,26 +28,27 @@ def main(config):
         cross_policy = hydra.utils.instantiate(config.cross_policy)
         circle_policy = hydra.utils.instantiate(config.circle_policy)
 
-        if isinstance(cross_policy, TreePolicy):
+        if isinstance(cross_policy, TreePolicy) and config.random_action_proba is not None:
             cross_policy.tree.set_random_proba(config.random_action_proba)
 
-        if isinstance(circle_policy, TreePolicy):
+        if isinstance(circle_policy, TreePolicy) and config.random_action_proba is not None:
             circle_policy.tree.set_random_proba(config.random_action_proba)
 
     env = hydra.utils.instantiate(config.env)
 
-    rewards = np.zeros(config.num_sim, dtype=np.int8)
+    game_stat = np.zeros(config.num_sim, dtype=np.int8)
 
     for i in tqdm.trange(config.num_sim, miniters=500):
-        rewards[i] = simulate(env, cross_policy, circle_policy)
+        game_stat[i] = simulate(env, cross_policy, circle_policy)
 
     metric_file = pathlib.Path(config.metric_file)
     metric_file.parent.mkdir(parents=True, exist_ok=True)
 
-    stat = compute_game_stat(rewards)
+    stat = compute_game_stat(game_stat)
 
-    game_stat = {"cross_fraction_win": stat.cross_win_fraction, "circle_fraction_win": stat.circle_win_fraction,
-                 "draw_fraction": stat.draw_fraction}
+    game_stat = {"cross_fraction_win": stat.cross_win_fraction,
+                "circle_fraction_win": stat.circle_win_fraction,
+                "draw_fraction": stat.draw_fraction}
 
     logger.info("Save metric to %s", metric_file)
 

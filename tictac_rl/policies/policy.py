@@ -1,7 +1,6 @@
 import random
 from abc import ABC, abstractmethod
 from typing import Optional
-import numpy
 
 import torch
 

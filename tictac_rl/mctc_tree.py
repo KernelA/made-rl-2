@@ -1,12 +1,13 @@
-from logging import root
 import math
 from typing import Optional, Sequence, Tuple
 import random
 
 from anytree import NodeMixin
 
+from tictac_rl.policies.policy import BasePolicy, TreePolicy
 
-from .env import TicTacToe, CROSS_PLAYER, CIRCLE_PLAYER, DRAW, ActionType
+
+from .env import TicTacToe, CROSS_PLAYER, DRAW, ActionType
 from .contstants import EMPTY_STATE
 from .base_tree import GameTreeBase
 
@@ -243,3 +244,35 @@ class MCTS(GameTreeBase):
 
         if is_max:
             parent_node._num_wins += win_count
+
+
+class MCTSWithPolicyRollout(MCTS):
+    def __init__(self, env: TicTacToe,
+            cross_policy: BasePolicy,
+            circle_policy: BasePolicy,
+            generator: Optional[random.Random] = None,
+            eps: float = 0,
+            depth_limit: Optional[int] = None):
+        super().__init__(env, generator=generator, eps=eps, depth_limit=depth_limit)
+
+        if isinstance(cross_policy, TreePolicy):
+            raise ValueError(f"Unexpected policy for cross got {type(circle_policy)}")
+
+        if isinstance(circle_policy, TreePolicy):
+            raise ValueError(f"Unexpected policy for circle got {type(circle_policy)}")
+
+        self._circle_policy = circle_policy
+        self._cross_policy = cross_policy
+
+    def _simulation(self, env: TicTacToe) -> int:
+        self._cross_policy.reset()
+        self._circle_policy.reset()
+        return super()._simulation(env)
+
+    def _make_move(self, env: TicTacToe, free_space) -> ActionType:
+        if env.curTurn == CROSS_PLAYER:
+            return self._cross_policy.action(env, env._getHash())
+
+        return self._circle_policy.action(env, env._getHash())
+
+

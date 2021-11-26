@@ -13,7 +13,7 @@ defaults:
   - _self_
 
 num_sim: 2000
-random_action_proba: 0
+random_action_proba: null
 metric_file: ./game_stat.json
 
 train_config: null

@@ -9,7 +9,7 @@ stages:
     outs:
       - ${out_dir}
 
-  precompute-mcts-cross:
+  precompute-mcts-cross-4x4:
     vars:
       - out_dir: ./trees/mcts/4/cross
     cmd: python ./precompute_mctc_tree.py out_dir=${out_dir} cross_policy.tree.env='\${env}'
@@ -22,7 +22,35 @@ stages:
     outs:
       - ${out_dir}
 
+  precompute-mcts-cross:
+    vars:
+      - out_dir: ./trees/mcts/3/cross
+      - tree_file: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+    cmd: python ./precompute_mctc_tree.py env=env3x3 num_simulation=10000 cross_policy=mcts_tree cross_policy.tree.depth_limit=null out_dir=${out_dir} cross_policy.tree.env='\${env}' circle_policy=tree_from_dump circle_policy.tree.path_to_file='\${hydra:runtime.cwd}'/${tree_file}
+    deps:
+      - ./precompute_mctc_tree.py
+      - ./configs/mcts_precompute.yaml
+    params:
+      - ./configs/mcts_precompute.yaml:
+          - num_simulation
+    outs:
+      - ${out_dir}
+
   precompute-mcts-circle:
+    vars:
+      - out_dir: ./trees/mcts/3/circle
+      - tree_file: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+    cmd: python ./precompute_mctc_tree.py env=env3x3 num_simulation=10000 circle_policy=mcts_tree circle_policy.tree.depth_limit=null out_dir=${out_dir} cross_policy=tree_from_dump cross_policy.tree.path_to_file='\${hydra:runtime.cwd}'/${tree_file}
+    deps:
+      - ./precompute_mctc_tree.py
+      - ./configs/mcts_precompute.yaml
+    params:
+      - ./configs/mcts_precompute.yaml:
+          - num_simulation
+    outs:
+      - ${out_dir}
+
+  precompute-mcts-circle-4x4:
     vars:
       - out_dir: ./trees/mcts/4/circle
     cmd: python ./precompute_mctc_tree.py out_dir=${out_dir} cross_policy=random circle_policy=mcts_tree circle_policy.tree.env=\${env}
@@ -226,5 +254,43 @@ stages:
     deps:
       - ./q_learn_params.py
       - ./configs/table_q_learning.yaml
+    outs:
+      - ${out_dir}
+
+  duoling-dqn-learning-train-circle:
+    vars:
+      - ./configs/table_q_learning.yaml
+      - out_dir: ./exp/duoling_dqn_learning/circle
+      - tree_path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+    cmd: python ./q_learn_params.py -m cross_policy=tree_from_dump circle_policy=duoling_network cross_policy.tree.path_to_file='\${hydra:runtime.cwd}'/${tree_path} q_learner.alpha=1e-4,1e-5,1e-6 optimizer.lr='\${q_learner.alpha}' q_learner.gamma=0.1,0.5,0.25 hydra.sweep.dir=${out_dir} q_learner._target_=tictac_rl.q_learning.q_learning.DuelingQNeuralNetworkSimulation circle_policy.model.n_rows='\${env.n_rows}' circle_policy.model.n_cols='\${env.n_cols}' +q_learner.memory_capacity=10000 +q_learner.batch_size=128 +q_learner.device=cpu num_train_iterations=30000 +q_learner.target_update=10
+    params:
+      - ./configs/table_q_learning.yaml:
+          - num_train_iterations
+          - num_test_iterations
+          - num_valid_episodes
+          - tree_random_action_proba
+    deps:
+      - ./q_learn_params.py
+      - ./configs/table_q_learning.yaml
+      - ${tree_path}
+    outs:
+      - ${out_dir}
+
+  duoling-dqn-learning-train-cross:
+    vars:
+      - ./configs/table_q_learning.yaml
+      - out_dir: ./exp/duoling_dqn_learning/cross
+      - tree_path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+    cmd: python ./q_learn_params.py -m circle_policy=tree_from_dump cross_policy=duoling_network circle_policy.tree.path_to_file='\${hydra:runtime.cwd}'/${tree_path} q_learner.alpha=1e-4,1e-5,1e-6 optimizer.lr='\${q_learner.alpha}' q_learner.gamma=0.1,0.5,0.25 hydra.sweep.dir=${out_dir} q_learner._target_=tictac_rl.q_learning.q_learning.DuelingQNeuralNetworkSimulation cross_policy.model.n_rows='\${env.n_rows}' cross_policy.model.n_cols='\${env.n_cols}' +q_learner.memory_capacity=10000 +q_learner.batch_size=128 +q_learner.device=cpu num_train_iterations=30000 +q_learner.target_update=10
+    params:
+      - ./configs/table_q_learning.yaml:
+          - num_train_iterations
+          - num_test_iterations
+          - num_valid_episodes
+          - tree_random_action_proba
+    deps:
+      - ./q_learn_params.py
+      - ./configs/table_q_learning.yaml
+      - ${tree_path}
     outs:
       - ${out_dir}

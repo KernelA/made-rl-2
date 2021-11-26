@@ -344,9 +344,8 @@ class DuelingQNeuralNetworkSimulation(TDLearning):
             self._q_network: DuelingNetwork = cross_policy._model
         elif isinstance(circle_policy, NetworkPolicy):
             assert isinstance(circle_policy._model, DuelingNetwork)
-            self._q_network: DuelingNetwork = cross_policy._model
+            self._q_network: DuelingNetwork = circle_policy._model
             q_player = CIRCLE_PLAYER
-            self._q_network = circle_policy
 
         if isinstance(cross_policy, NetworkPolicy) and isinstance(circle_policy, NetworkPolicy):
             raise ValueError("Cannot train both networks: circle and cross")
@@ -370,7 +369,7 @@ class DuelingQNeuralNetworkSimulation(TDLearning):
         super().train(num_episode)
         self._is_q_player_make_step = False
 
-        if num_episode % self._target_update:
+        if num_episode % self._target_update == 0:
             self._q_network.update_target_network()
 
     def _train_model(self):
@@ -409,7 +408,7 @@ class DuelingQNeuralNetworkSimulation(TDLearning):
         loss = F.smooth_l1_loss(state_action_values.view(-1), expected_q_function)
         loss.backward()
         self._writer.add_scalar("Train/L1_loss", loss.item(), global_step=self._num_step)
-        torch.nn.utils.clip_grad.clip_grad_value_(self._q_network._model.parameters(), 1)
+        torch.nn.utils.clip_grad.clip_grad_value_(self._q_network.policy_network.parameters(), 1)
         self._optimizer.step()
         self._num_step += 1
 
