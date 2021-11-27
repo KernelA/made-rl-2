@@ -1,0 +1,6 @@
+name: 'mcts-rollout-dqn'
+object:
+  _target_: tictac_rl.policies.policy.TreePolicy
+  tree:
+    _target_: tictac_rl.utils.load_from_dump
+    path_to_file: ${hydra:runtime.cwd}/trees/mcts/4/cross_dqn/4_4_4_cross_start_1.pickle
