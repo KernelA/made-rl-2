@@ -6,8 +6,7 @@ hydra:
 defaults:
   - _self_
   - env: env4x4
-  - circle_policy: random
-  - cross_policy: mcts_tree
+  - cross_policy_random: mcts_tree
 
 out_dir: ./trees/mcts/4/cross
 num_simulation: 40000

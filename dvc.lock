@@ -425,8 +425,8 @@ stages:
         tree_random_action_proba: 0.09
     outs:
     - path: ./exp/duoling_dqn_learning/circle
-      md5: 51d1445aff3b87657107553dcafa2835.dir
-      size: 634431167
+      md5: 67243ececebd337553a4c9314ac98617.dir
+      size: 633553175
       nfiles: 109
   duoling-dqn-learning-train-cross:
     cmd: python ./q_learn_params.py -m circle_policy=tree_from_dump cross_policy=duoling_network
@@ -457,3 +457,93 @@ stages:
       md5: 5387bb33b8d7723ff82fe5ed673b5472.dir
       size: 643651994
       nfiles: 109
+  duoling-dqn-learning-train-cross-4x4:
+    cmd: python ./q_learn_params.py -m circle_policy=random cross_policy=duoling_network
+      q_learner.alpha=1e-4,1e-5,1e-6 optimizer.lr='${q_learner.alpha}' q_learner.gamma=0.1,0.5,0.25
+      hydra.sweep.dir=./exp/duoling_dqn_learning/4/cross q_learner._target_=tictac_rl.q_learning.q_learning.DuelingQNeuralNetworkSimulation
+      cross_policy.model.n_rows='${env.n_rows}' cross_policy.model.n_cols='${env.n_cols}'
+      +q_learner.memory_capacity=10000 +q_learner.batch_size=128 +q_learner.device=cpu
+      num_train_iterations=50000 +q_learner.target_update=10
+    deps:
+    - path: ./configs/table_q_learning.yaml
+      md5: 4ff8cdb8f12342a916b5f6a3d6b44e84
+      size: 581
+    - path: ./q_learn_params.py
+      md5: fd0c045298c38fa27ac0fcb4b96d74e7
+      size: 3817
+    params:
+      configs/table_q_learning.yaml:
+        num_test_iterations: 50
+        num_train_iterations: 20000
+        num_valid_episodes: 1000
+        tree_random_action_proba: 0.09
+    outs:
+    - path: ./exp/duoling_dqn_learning/4/cross
+      md5: 7fd84b42f251ffdf1ed648fcf4746e3b.dir
+      size: 83721030
+      nfiles: 109
+  duoling-dqn-learning-train-circle-4x4:
+    cmd: python ./q_learn_params.py -m cross_policy=random circle_policy=duoling_network
+      q_learner.alpha=1e-4,1e-5,1e-6 optimizer.lr='${q_learner.alpha}' q_learner.gamma=0.1,0.5,0.25
+      hydra.sweep.dir=./exp/duoling_dqn_learning/4/circle q_learner._target_=tictac_rl.q_learning.q_learning.DuelingQNeuralNetworkSimulation
+      circle_policy.model.n_rows='${env.n_rows}' circle_policy.model.n_cols='${env.n_cols}'
+      +q_learner.memory_capacity=10000 +q_learner.batch_size=128 +q_learner.device=cpu
+      num_train_iterations=70000 +q_learner.target_update=10
+    deps:
+    - path: ./configs/table_q_learning.yaml
+      md5: 4ff8cdb8f12342a916b5f6a3d6b44e84
+      size: 581
+    - path: ./q_learn_params.py
+      md5: fd0c045298c38fa27ac0fcb4b96d74e7
+      size: 3817
+    params:
+      configs/table_q_learning.yaml:
+        num_test_iterations: 50
+        num_train_iterations: 20000
+        num_valid_episodes: 1000
+        tree_random_action_proba: 0.09
+    outs:
+    - path: ./exp/duoling_dqn_learning/4/circle
+      md5: 7dd998935cc6cfc284226931bd0d3914.dir
+      size: 111677519
+      nfiles: 109
+  precompute-mcts-cross-random:
+    cmd: python ./precompute_mctc_tree.py -cn mcts_precompute_cross_3x3_random
+    deps:
+    - path: ./configs/mcts_precompute_cross_3x3_random.yaml
+      md5: e9c1eb636b8a04954183b6a9a06b451b
+      size: 507
+    - path: ./precompute_mctc_tree.py
+      md5: 8cee4492475daca0c13e812bcb8c4ab0
+      size: 1398
+    - path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+      md5: 3cc3797e6781edce02eb617756be9c97
+      size: 64100756
+    params:
+      configs/mcts_precompute_cross_3x3_random.yaml:
+        num_simulation: 10000
+    outs:
+    - path: ./trees/mcts/3/cross_random
+      md5: 6158af3bfec4e8a9a68d6f57f627d85c.dir
+      size: 81622000
+      nfiles: 2
+  precompute-mcts-circle-random:
+    cmd: python ./precompute_mctc_tree.py -cn mcts_precompute_circle_3x3_random
+    deps:
+    - path: ./configs/mcts_precompute_circle_3x3_random.yaml
+      md5: 0fecd2011d02cd63b6b67bc4b9dc29b1
+      size: 397
+    - path: ./precompute_mctc_tree.py
+      md5: 8cee4492475daca0c13e812bcb8c4ab0
+      size: 1398
+    - path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+      md5: 3cc3797e6781edce02eb617756be9c97
+      size: 64100756
+    params:
+      configs/mcts_precompute_circle_3x3_random.yaml:
+        num_simulation: 20000
+    outs:
+    - path: ./trees/mcts/3/circle_random
+      md5: 6b1639f4a152f975f18b2bf57423c9ff.dir
+      size: 112532141
+      nfiles: 1
