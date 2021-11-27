@@ -9,8 +9,10 @@ import logging.config
 
 import yaml
 
+os.makedirs("logs", exist_ok=True)
+
 with open(os.environ.get("LOG_CONFIG", "log_settings.yaml"), "rb") as file:
-  log_config = yaml.safe_load(file)
+    log_config = yaml.safe_load(file)
 
 logging.config.dictConfig(log_config)
 del log_config

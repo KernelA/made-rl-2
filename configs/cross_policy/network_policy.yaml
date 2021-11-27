@@ -1,0 +1,7 @@
+_target_: tictac_rl.policies.policy.NetworkPolicy
+model:
+  _target_: tictac_rl.nn.policy_network.QNetwork
+  n_rows: null
+  n_cols: null
+epsilon: 0.01
+seed: 125

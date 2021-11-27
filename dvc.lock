@@ -1,0 +1,649 @@
+schema: '2.0'
+stages:
+  precompute-tree@1:
+    cmd: python ./precompute_tree.py -n 3 --start_player circle --out_dir ./trees/3/circle
+    deps:
+    - path: ./precompute_tree.py
+      md5: 32255a674a814fb11439eb911270ad81
+      size: 1194
+    outs:
+    - path: ./trees/3/circle
+      md5: 49991dfea7f3942a64e16d75eda11df5.dir
+      size: 116094237
+      nfiles: 1
+  precompute-tree@0:
+    cmd: python ./precompute_tree.py -n 3 --start_player cross --out_dir ./trees/3/cross
+    deps:
+    - path: ./precompute_tree.py
+      md5: 32255a674a814fb11439eb911270ad81
+      size: 1194
+    outs:
+    - path: ./trees/3/cross
+      md5: ab803245b46a6fa3efc71cad67dda394.dir
+      size: 116094313
+      nfiles: 1
+  precompute-tree:
+    cmd: python ./precompute_tree.py
+    deps:
+    - path: ./configs/minmax_precompute.yaml
+      md5: 3a0af9561c281408ba362d73480452ad
+      size: 128
+    - path: ./precompute_tree.py
+      md5: b81e6a27da4e207f94751c7e914b981a
+      size: 760
+    outs:
+    - path: ./trees/minmax/3/cross
+      md5: a136f2b304d88f044b70c8ab52b9ad11.dir
+      size: 64100790
+      nfiles: 1
+  precompute-mcts-cross:
+    cmd: python ./precompute_mctc_tree.py out_dir=./trees/mcts/4/cross cross_policy.tree.env='${env}'
+    deps:
+    - path: ./configs/mcts_precompute.yaml
+      md5: 21d116c11542150aac99054e974bd996
+      size: 192
+    - path: ./precompute_mctc_tree.py
+      md5: 8cee4492475daca0c13e812bcb8c4ab0
+      size: 1398
+    params:
+      configs/mcts_precompute.yaml:
+        num_simulation: 40000
+    outs:
+    - path: ./trees/mcts/4/cross
+      md5: 98a3b7e1bcfe92d9d95667037c8c83e7.dir
+      size: 1599199683
+      nfiles: 1
+  precompute-mcts-circle:
+    cmd: python ./precompute_mctc_tree.py out_dir=./trees/mcts/4/circle cross_policy=random
+      circle_policy=mcts_tree circle_policy.tree.env='${env}'
+    deps:
+    - path: ./configs/mcts_precompute.yaml
+      md5: 21d116c11542150aac99054e974bd996
+      size: 192
+    - path: ./precompute_mctc_tree.py
+      md5: 8cee4492475daca0c13e812bcb8c4ab0
+      size: 1398
+    params:
+      configs/mcts_precompute.yaml:
+        num_simulation: 40000
+    outs:
+    - path: ./trees/mcts/4/circle
+      md5: 519ffbe99987c9260538c5e8964fdee2.dir
+      size: 2864640874
+      nfiles: 1
+  precompute-states-cross:
+    cmd: python ./generate_all_states.py start_player=1 state_file=./stat/3/cross_stat.json
+    deps:
+    - path: ./configs/generate_states.yaml
+      md5: f39e23ed4bea242021942e3a196d1fda
+      size: 272
+    - path: ./generate_all_states.py
+      md5: 87d54888c5132e9afbb3abca82b01048
+      size: 1408
+    outs:
+    - path: ./stat/3/cross_stat.json
+      md5: fc118a9307dc305c3d6adfd44c7b2d17
+      size: 78520
+  precompute-states-circle:
+    cmd: python ./generate_all_states.py start_player=-1 state_file=./stat/3/circle_stat.json
+    deps:
+    - path: ./configs/generate_states.yaml
+      md5: f39e23ed4bea242021942e3a196d1fda
+      size: 272
+    - path: ./generate_all_states.py
+      md5: 87d54888c5132e9afbb3abca82b01048
+      size: 1408
+    outs:
+    - path: ./stat/3/circle_stat.json
+      md5: 2eeae758b45b5d9b10ef3488d441b136
+      size: 70349
+  precompute-minmax-tree:
+    cmd: python ./precompute_tree.py
+    deps:
+    - path: ./configs/minmax_precompute.yaml
+      md5: 3a0af9561c281408ba362d73480452ad
+      size: 118
+    - path: ./precompute_tree.py
+      md5: b81e6a27da4e207f94751c7e914b981a
+      size: 731
+    outs:
+    - path: ./trees/minmax/3/cross
+      md5: 0a875b4535cfcc6a8e4d6f995619ad20.dir
+      size: 64100756
+      nfiles: 1
+  compute-minmax-game-circle-random:
+    cmd: python ./simulate_game.py -m cross_policy=random circle_policy=from_dump
+      circle_policy.tree.path_to_file=${hydra:runtime.cwd}/./trees/minmax/3/cross/3_3_3_start_1.pickle
+      random_action_proba=0.9,0.95,0.96,0.97,0.99 hydra.sweep.dir=stat/cross_random_vs_minmax/
+    deps:
+    - path: ./configs/simulate.yaml
+      md5: c206af68c2cd4409c0269f4e7de939b4
+      size: 381
+    - path: ./simulate_game.py
+      md5: 429fd96f263e4b84bc93f9145b3bbc54
+      size: 1904
+    - path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+      md5: c813f1f0c7f387619e587fea9d5145f5
+      size: 64100790
+    outs:
+    - path: stat/cross_random_vs_minmax/
+      md5: d7b28cfb81643f92f0e03181eafbe703.dir
+      size: 28250
+      nfiles: 26
+  compute-minmax-game-cross-minmax:
+    cmd: python ./simulate_game.py -m cross_policy=tree_from_dump cross_policy.tree.path_to_file='${hydra:runtime.cwd}'/./trees/minmax/3/cross/3_3_3_start_1.pickle
+      circle_policy=random random_action_proba=0,0.1,0.2,0.5,0.7,0.9 hydra.sweep.dir=stat/cross_minmax_vs_random/
+    deps:
+    - path: ./configs/simulate.yaml
+      md5: a4bb38cb6fbbff1569eebaecdee208b1
+      size: 367
+    - path: ./simulate_game.py
+      md5: c0d8227d512f009258b971d760fc5754
+      size: 1880
+    - path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+      md5: 3cc3797e6781edce02eb617756be9c97
+      size: 64100756
+    params:
+      configs/simulate.yaml:
+        num_sim: 2000
+    outs:
+    - path: stat/cross_minmax_vs_random/
+      md5: b31a02a368a2a5d4a15ab92e037b6123.dir
+      size: 31768
+      nfiles: 31
+  compute-minmax-game-circle-minmax:
+    cmd: python ./simulate_game.py -m cross_policy=random circle_policy=tree_from_dump
+      circle_policy.tree.path_to_file='${hydra:runtime.cwd}'/./trees/minmax/3/cross/3_3_3_start_1.pickle
+      random_action_proba=0,0.1,0.2,0.5,0.7,0.9 hydra.sweep.dir=stat/cross_random_vs_minmax/
+    deps:
+    - path: ./configs/simulate.yaml
+      md5: a4bb38cb6fbbff1569eebaecdee208b1
+      size: 367
+    - path: ./simulate_game.py
+      md5: c0d8227d512f009258b971d760fc5754
+      size: 1880
+    - path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+      md5: 3cc3797e6781edce02eb617756be9c97
+      size: 64100756
+    params:
+      configs/simulate.yaml:
+        num_sim: 2000
+    outs:
+    - path: stat/cross_random_vs_minmax/
+      md5: a991ecbda3504fbca7b0f609f69e70de.dir
+      size: 31737
+      nfiles: 31
+  precompute-states-3x3-cross:
+    cmd: python ./generate_all_states.py start_player=1 state_file=./stat/3/cross_stat.json
+    deps:
+    - path: ./configs/generate_states.yaml
+      md5: f39e23ed4bea242021942e3a196d1fda
+      size: 257
+    - path: ./generate_all_states.py
+      md5: 4965bf04fc1c1e27d89f6a5114f252d4
+      size: 1229
+    - path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+      md5: 3cc3797e6781edce02eb617756be9c97
+      size: 64100756
+    outs:
+    - path: ./stat/3/cross_stat.json
+      md5: 1866ae5ae57c0e2554ae12c89ddfaa65
+      size: 62234
+  precompute-states-3x3-circle:
+    cmd: python ./generate_all_states.py start_player=-1 state_file=./stat/3/circle_stat.json
+    deps:
+    - path: ./configs/generate_states.yaml
+      md5: f39e23ed4bea242021942e3a196d1fda
+      size: 257
+    - path: ./generate_all_states.py
+      md5: 4965bf04fc1c1e27d89f6a5114f252d4
+      size: 1229
+    - path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+      md5: 3cc3797e6781edce02eb617756be9c97
+      size: 64100756
+    outs:
+    - path: ./stat/3/circle_stat.json
+      md5: 479c86ef6f39d9dde2c58b75a55bedde
+      size: 54063
+  q-table-learning-train-cross:
+    cmd: python ./q_learn_params.py -m circle_policy.tree.path_to_file='${hydra:runtime.cwd}'/./trees/minmax/3/cross/3_3_3_start_1.pickle
+      q_learner.alpha=0.5,0.8,0.9 q_learner.gamma=0.1,0.5,0.8 hydra.sweep.dir=./exp/table_q_learning/cross
+    deps:
+    - path: ./configs/table_q_learning.yaml
+      md5: 4ff8cdb8f12342a916b5f6a3d6b44e84
+      size: 581
+    - path: ./q_learn_params.py
+      md5: fd0c045298c38fa27ac0fcb4b96d74e7
+      size: 3817
+    - path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+      md5: 3cc3797e6781edce02eb617756be9c97
+      size: 64100756
+    params:
+      configs/table_q_learning.yaml:
+        num_test_iterations: 50
+        num_train_iterations: 20000
+        num_valid_episodes: 1000
+        tree_random_action_proba: 0.09
+    outs:
+    - path: ./exp/table_q_learning/cross
+      md5: db6b889b57ec41760a3c84a977c4a4f0.dir
+      size: 594041244
+      nfiles: 109
+  q-table-learning-train-circle:
+    cmd: python ./q_learn_params.py -m circle_policy=q_learning cross_policy=tree_from_dump
+      cross_policy.tree.path_to_file='${hydra:runtime.cwd}'/./trees/minmax/3/cross/3_3_3_start_1.pickle
+      learning_rate=0.5,0.8,0.9 gamma=0.1,0.5,0.8 hydra.sweep.dir=./exp/table_q_learning/circle
+    deps:
+    - path: ./configs/simulate.yaml
+      md5: a4bb38cb6fbbff1569eebaecdee208b1
+      size: 367
+    - path: ./q_learn_params.py
+      md5: 8e37819a9e7be871206c80bcc753f9ac
+      size: 3407
+    - path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+      md5: 3cc3797e6781edce02eb617756be9c97
+      size: 64100756
+    params:
+      configs/table_q_learning.yaml:
+        num_test_iterations: 50
+        num_train_iterations: 20000
+        num_valid_episodes: 1000
+        tree_random_action_proba: 0.09
+    outs:
+    - path: ./exp/table_q_learning/circle
+      md5: e4e89f60bda5f6613d3c5bd5b22ae64a.dir
+      size: 595529234
+      nfiles: 109
+  q-table-learning-train-cross-4x4:
+    cmd: python ./q_learn_params.py -m env=env4x4 num_train_iterations=900000 cross_policy=q_learning
+      circle_policy=random learning_rate=0.5,0.8,0.9 gamma=0.1,0.5,0.8 hydra.sweep.dir=./exp/table_q_learning/4/cross
+    deps:
+    - path: ./configs/simulate.yaml
+      md5: a4bb38cb6fbbff1569eebaecdee208b1
+      size: 367
+    - path: ./q_learn_params.py
+      md5: 8e37819a9e7be871206c80bcc753f9ac
+      size: 3407
+    params:
+      configs/table_q_learning.yaml:
+        num_test_iterations: 50
+        num_train_iterations: 20000
+        num_valid_episodes: 1000
+    outs:
+    - path: ./exp/table_q_learning/4/cross
+      md5: aafcf40b022d8076774ba152539481f9.dir
+      size: 4428955781
+      nfiles: 109
+  q-table-learning-train-circle-4x4:
+    cmd: python ./q_learn_params.py -m env=env4x4 num_train_iterations=900000 circle_policy=q_learning
+      cross_policy=random learning_rate=0.5,0.8,0.9 gamma=0.1,0.5,0.8 hydra.sweep.dir=./exp/table_q_learning/4/circle
+    deps:
+    - path: ./configs/simulate.yaml
+      md5: a4bb38cb6fbbff1569eebaecdee208b1
+      size: 367
+    - path: ./q_learn_params.py
+      md5: 8e37819a9e7be871206c80bcc753f9ac
+      size: 3407
+    params:
+      configs/table_q_learning.yaml:
+        num_test_iterations: 50
+        num_train_iterations: 20000
+        num_valid_episodes: 1000
+    outs:
+    - path: ./exp/table_q_learning/4/circle
+      md5: e9ed38631efbe59bd6332d653c797456.dir
+      size: 8648621049
+      nfiles: 109
+  dqn-learning-train-cross:
+    cmd: python ./q_learn_params.py -m cross_policy=network_policy circle_policy.tree.path_to_file='${hydra:runtime.cwd}'/./trees/minmax/3/cross/3_3_3_start_1.pickle
+      q_learner.alpha=1e-4,1e-5,1e-6 optimizer.lr='${q_learner.alpha}' q_learner.gamma=0.1,0.5,0.25
+      hydra.sweep.dir=./exp/dqn_learning/cross q_learner._target_=tictac_rl.q_learning.q_learning.QNeuralNetworkSimulation
+      cross_policy.model.n_rows='${env.n_rows}' cross_policy.model.n_cols='${env.n_cols}'
+      +q_learner.memory_capacity=10000 +q_learner.batch_size=128 +q_learner.device=cpu
+      num_train_iterations=30000
+    deps:
+    - path: ./configs/table_q_learning.yaml
+      md5: 4ff8cdb8f12342a916b5f6a3d6b44e84
+      size: 581
+    - path: ./q_learn_params.py
+      md5: fd0c045298c38fa27ac0fcb4b96d74e7
+      size: 3817
+    - path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+      md5: 3cc3797e6781edce02eb617756be9c97
+      size: 64100756
+    params:
+      configs/table_q_learning.yaml:
+        num_test_iterations: 50
+        num_train_iterations: 20000
+        num_valid_episodes: 1000
+        tree_random_action_proba: 0.09
+    outs:
+    - path: ./exp/dqn_learning/cross
+      md5: fb6961093cbd463ae8daf7fb42154136.dir
+      size: 643084754
+      nfiles: 109
+  dqn-learning-train-circle:
+    cmd: python ./q_learn_params.py -m cross_policy=tree_from_dump circle_policy=network_policy
+      cross_policy.tree.path_to_file='${hydra:runtime.cwd}'/./trees/minmax/3/cross/3_3_3_start_1.pickle
+      q_learner.alpha=1e-4,1e-5,1e-6 optimizer.lr='${q_learner.alpha}' q_learner.gamma=0.1,0.5,0.25
+      hydra.sweep.dir=./exp/dqn_learning/circle q_learner._target_=tictac_rl.q_learning.q_learning.QNeuralNetworkSimulation
+      circle_policy.model.n_rows='${env.n_rows}' circle_policy.model.n_cols='${env.n_cols}'
+      +q_learner.memory_capacity=10000 +q_learner.batch_size=128 +q_learner.device=cpu
+      num_train_iterations=30000
+    deps:
+    - path: ./configs/table_q_learning.yaml
+      md5: 4ff8cdb8f12342a916b5f6a3d6b44e84
+      size: 581
+    - path: ./q_learn_params.py
+      md5: fd0c045298c38fa27ac0fcb4b96d74e7
+      size: 3817
+    - path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+      md5: 3cc3797e6781edce02eb617756be9c97
+      size: 64100756
+    params:
+      configs/table_q_learning.yaml:
+        num_test_iterations: 50
+        num_train_iterations: 20000
+        num_valid_episodes: 1000
+        tree_random_action_proba: 0.09
+    outs:
+    - path: ./exp/dqn_learning/circle
+      md5: 4cccaff330b302cefdf824817e97e597.dir
+      size: 633572716
+      nfiles: 109
+  dqn-learning-train-cross-4x4:
+    cmd: python ./q_learn_params.py -m env=env4x4 cross_policy=network_policy circle_policy=random
+      q_learner.alpha=1e-4,1e-5,1e-6 optimizer.lr='${q_learner.alpha}' q_learner.gamma=0.1,0.5,0.25
+      hydra.sweep.dir=./exp/dqn_learning/4/cross q_learner._target_=tictac_rl.q_learning.q_learning.QNeuralNetworkSimulation
+      cross_policy.model.n_rows='${env.n_rows}' cross_policy.model.n_cols='${env.n_cols}'
+      +q_learner.memory_capacity=10000 +q_learner.batch_size=128 +q_learner.device=cpu
+      num_train_iterations=50000
+    deps:
+    - path: ./configs/table_q_learning.yaml
+      md5: 4ff8cdb8f12342a916b5f6a3d6b44e84
+      size: 581
+    - path: ./q_learn_params.py
+      md5: fd0c045298c38fa27ac0fcb4b96d74e7
+      size: 3817
+    params:
+      configs/table_q_learning.yaml:
+        num_test_iterations: 50
+        num_train_iterations: 20000
+        num_valid_episodes: 1000
+    outs:
+    - path: ./exp/dqn_learning/4/cross
+      md5: 1e13313d7276cf812ae732535b392bb6.dir
+      size: 176090911
+      nfiles: 109
+  dqn-learning-train-circle-4x4:
+    cmd: python ./q_learn_params.py -m env=env4x4 cross_policy=random circle_policy=network_policy
+      q_learner.alpha=1e-4,1e-5,1e-6 optimizer.lr='${q_learner.alpha}' q_learner.gamma=0.1,0.5,0.25
+      hydra.sweep.dir=./exp/dqn_learning/4/circle q_learner._target_=tictac_rl.q_learning.q_learning.QNeuralNetworkSimulation
+      circle_policy.model.n_rows='${env.n_rows}' circle_policy.model.n_cols='${env.n_cols}'
+      +q_learner.memory_capacity=10000 +q_learner.batch_size=128 +q_learner.device=cpu
+      num_train_iterations=50000
+    deps:
+    - path: ./configs/table_q_learning.yaml
+      md5: 4ff8cdb8f12342a916b5f6a3d6b44e84
+      size: 581
+    - path: ./q_learn_params.py
+      md5: fd0c045298c38fa27ac0fcb4b96d74e7
+      size: 3817
+    params:
+      configs/table_q_learning.yaml:
+        num_test_iterations: 50
+        num_train_iterations: 20000
+        num_valid_episodes: 1000
+    outs:
+    - path: ./exp/dqn_learning/4/circle
+      md5: e0481dfcba8c7cf4bb2f59be7c897b3e.dir
+      size: 159617691
+      nfiles: 109
+  duoling-dqn-learning-train-circle:
+    cmd: python ./q_learn_params.py -m cross_policy=tree_from_dump circle_policy=duoling_network
+      cross_policy.tree.path_to_file='${hydra:runtime.cwd}'/./trees/minmax/3/cross/3_3_3_start_1.pickle
+      q_learner.alpha=1e-4,1e-5,1e-6 optimizer.lr='${q_learner.alpha}' q_learner.gamma=0.1,0.5,0.25
+      hydra.sweep.dir=./exp/duoling_dqn_learning/circle q_learner._target_=tictac_rl.q_learning.q_learning.DuelingQNeuralNetworkSimulation
+      circle_policy.model.n_rows='${env.n_rows}' circle_policy.model.n_cols='${env.n_cols}'
+      +q_learner.memory_capacity=10000 +q_learner.batch_size=128 +q_learner.device=cpu
+      num_train_iterations=30000 +q_learner.target_update=10
+    deps:
+    - path: ./configs/table_q_learning.yaml
+      md5: 4ff8cdb8f12342a916b5f6a3d6b44e84
+      size: 581
+    - path: ./q_learn_params.py
+      md5: fd0c045298c38fa27ac0fcb4b96d74e7
+      size: 3817
+    - path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+      md5: 3cc3797e6781edce02eb617756be9c97
+      size: 64100756
+    params:
+      configs/table_q_learning.yaml:
+        num_test_iterations: 50
+        num_train_iterations: 20000
+        num_valid_episodes: 1000
+        tree_random_action_proba: 0.09
+    outs:
+    - path: ./exp/duoling_dqn_learning/circle
+      md5: 67243ececebd337553a4c9314ac98617.dir
+      size: 633553175
+      nfiles: 109
+  duoling-dqn-learning-train-cross:
+    cmd: python ./q_learn_params.py -m circle_policy=tree_from_dump cross_policy=duoling_network
+      circle_policy.tree.path_to_file='${hydra:runtime.cwd}'/./trees/minmax/3/cross/3_3_3_start_1.pickle
+      q_learner.alpha=1e-4,1e-5,1e-6 optimizer.lr='${q_learner.alpha}' q_learner.gamma=0.1,0.5,0.25
+      hydra.sweep.dir=./exp/duoling_dqn_learning/cross q_learner._target_=tictac_rl.q_learning.q_learning.DuelingQNeuralNetworkSimulation
+      cross_policy.model.n_rows='${env.n_rows}' cross_policy.model.n_cols='${env.n_cols}'
+      +q_learner.memory_capacity=10000 +q_learner.batch_size=128 +q_learner.device=cpu
+      num_train_iterations=30000 +q_learner.target_update=10
+    deps:
+    - path: ./configs/table_q_learning.yaml
+      md5: 4ff8cdb8f12342a916b5f6a3d6b44e84
+      size: 581
+    - path: ./q_learn_params.py
+      md5: fd0c045298c38fa27ac0fcb4b96d74e7
+      size: 3817
+    - path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+      md5: 3cc3797e6781edce02eb617756be9c97
+      size: 64100756
+    params:
+      configs/table_q_learning.yaml:
+        num_test_iterations: 50
+        num_train_iterations: 20000
+        num_valid_episodes: 1000
+        tree_random_action_proba: 0.09
+    outs:
+    - path: ./exp/duoling_dqn_learning/cross
+      md5: 5387bb33b8d7723ff82fe5ed673b5472.dir
+      size: 643651994
+      nfiles: 109
+  duoling-dqn-learning-train-cross-4x4:
+    cmd: python ./q_learn_params.py -m circle_policy=random cross_policy=duoling_network
+      q_learner.alpha=1e-4,1e-5,1e-6 optimizer.lr='${q_learner.alpha}' q_learner.gamma=0.1,0.5,0.25
+      hydra.sweep.dir=./exp/duoling_dqn_learning/4/cross q_learner._target_=tictac_rl.q_learning.q_learning.DuelingQNeuralNetworkSimulation
+      cross_policy.model.n_rows='${env.n_rows}' cross_policy.model.n_cols='${env.n_cols}'
+      +q_learner.memory_capacity=10000 +q_learner.batch_size=128 +q_learner.device=cpu
+      num_train_iterations=50000 +q_learner.target_update=10
+    deps:
+    - path: ./configs/table_q_learning.yaml
+      md5: 4ff8cdb8f12342a916b5f6a3d6b44e84
+      size: 581
+    - path: ./q_learn_params.py
+      md5: fd0c045298c38fa27ac0fcb4b96d74e7
+      size: 3817
+    params:
+      configs/table_q_learning.yaml:
+        num_test_iterations: 50
+        num_train_iterations: 20000
+        num_valid_episodes: 1000
+        tree_random_action_proba: 0.09
+    outs:
+    - path: ./exp/duoling_dqn_learning/4/cross
+      md5: 7fd84b42f251ffdf1ed648fcf4746e3b.dir
+      size: 83721030
+      nfiles: 109
+  duoling-dqn-learning-train-circle-4x4:
+    cmd: python ./q_learn_params.py -m cross_policy=random circle_policy=duoling_network
+      q_learner.alpha=1e-4,1e-5,1e-6 optimizer.lr='${q_learner.alpha}' q_learner.gamma=0.1,0.5,0.25
+      hydra.sweep.dir=./exp/duoling_dqn_learning/4/circle q_learner._target_=tictac_rl.q_learning.q_learning.DuelingQNeuralNetworkSimulation
+      circle_policy.model.n_rows='${env.n_rows}' circle_policy.model.n_cols='${env.n_cols}'
+      +q_learner.memory_capacity=10000 +q_learner.batch_size=128 +q_learner.device=cpu
+      num_train_iterations=70000 +q_learner.target_update=10
+    deps:
+    - path: ./configs/table_q_learning.yaml
+      md5: 4ff8cdb8f12342a916b5f6a3d6b44e84
+      size: 581
+    - path: ./q_learn_params.py
+      md5: fd0c045298c38fa27ac0fcb4b96d74e7
+      size: 3817
+    params:
+      configs/table_q_learning.yaml:
+        num_test_iterations: 50
+        num_train_iterations: 20000
+        num_valid_episodes: 1000
+        tree_random_action_proba: 0.09
+    outs:
+    - path: ./exp/duoling_dqn_learning/4/circle
+      md5: 7dd998935cc6cfc284226931bd0d3914.dir
+      size: 111677519
+      nfiles: 109
+  precompute-mcts-cross-random:
+    cmd: python ./precompute_mctc_tree.py -cn mcts_precompute_cross_3x3_random
+    deps:
+    - path: ./configs/mcts_precompute_cross_3x3_random.yaml
+      md5: e9c1eb636b8a04954183b6a9a06b451b
+      size: 507
+    - path: ./precompute_mctc_tree.py
+      md5: 8cee4492475daca0c13e812bcb8c4ab0
+      size: 1398
+    - path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+      md5: 3cc3797e6781edce02eb617756be9c97
+      size: 64100756
+    params:
+      configs/mcts_precompute_cross_3x3_random.yaml:
+        num_simulation: 10000
+    outs:
+    - path: ./trees/mcts/3/cross_random
+      md5: 6158af3bfec4e8a9a68d6f57f627d85c.dir
+      size: 81622000
+      nfiles: 2
+  precompute-mcts-circle-random:
+    cmd: python ./precompute_mctc_tree.py -cn mcts_precompute_circle_3x3_random
+    deps:
+    - path: ./configs/mcts_precompute_circle_3x3_random.yaml
+      md5: 0fecd2011d02cd63b6b67bc4b9dc29b1
+      size: 397
+    - path: ./precompute_mctc_tree.py
+      md5: 8cee4492475daca0c13e812bcb8c4ab0
+      size: 1398
+    - path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+      md5: 3cc3797e6781edce02eb617756be9c97
+      size: 64100756
+    params:
+      configs/mcts_precompute_circle_3x3_random.yaml:
+        num_simulation: 20000
+    outs:
+    - path: ./trees/mcts/3/circle_random
+      md5: 6b1639f4a152f975f18b2bf57423c9ff.dir
+      size: 112532141
+      nfiles: 1
+  precompute-mcts-cross-qtable:
+    cmd: python ./precompute_mctc_tree.py -cn mcts_precompute_cross_3x3_q_table
+    deps:
+    - path: ./configs/mcts_precompute_cross_3x3_q_table.yaml
+      md5: e76f8fb32d6fcc66a1cae5638a6675d5
+      size: 612
+    - path: ./precompute_mctc_tree.py
+      md5: 8cee4492475daca0c13e812bcb8c4ab0
+      size: 1398
+    - path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+      md5: 3cc3797e6781edce02eb617756be9c97
+      size: 64100756
+    params:
+      configs/mcts_precompute_cross_3x3_q_table.yaml:
+        num_simulation: 10000
+    outs:
+    - path: ./trees/mcts/3/cross_q_table
+      md5: 40351c6c035cea14015e4f01c1b6cc63.dir
+      size: 81116318
+      nfiles: 2
+  precompute-mcts-circle-qtable:
+    cmd: python ./precompute_mctc_tree.py -cn mcts_precompute_circle_3x3_q_table
+    deps:
+    - path: ./configs/mcts_precompute_circle_3x3_q_table.yaml
+      md5: 30ab3aa94f69fb0e0f4f96c67a293696
+      size: 613
+    - path: ./precompute_mctc_tree.py
+      md5: 8cee4492475daca0c13e812bcb8c4ab0
+      size: 1398
+    - path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+      md5: 3cc3797e6781edce02eb617756be9c97
+      size: 64100756
+    params:
+      configs/mcts_precompute_circle_3x3_q_table.yaml:
+        num_simulation: 10000
+    outs:
+    - path: ./trees/mcts/3/circle_q_table
+      md5: 3bb7e85976c43cb65d2e8788bb650296.dir
+      size: 81509197
+      nfiles: 1
+  precompute-mcts-cross-duoling_dqn:
+    cmd: python ./precompute_mctc_tree.py -cn mcts_precompute_cross_3x3_duoling_dqn
+    deps:
+    - path: ./configs/mcts_precompute_cross_3x3_duoling_dqn.yaml
+      md5: b23717adea312a8733b4d91576839b98
+      size: 623
+    - path: ./precompute_mctc_tree.py
+      md5: 8cee4492475daca0c13e812bcb8c4ab0
+      size: 1398
+    - path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+      md5: 3cc3797e6781edce02eb617756be9c97
+      size: 64100756
+    params:
+      configs/mcts_precompute_cross_3x3_duoling_dqn.yaml:
+        num_simulation: 10000
+    outs:
+    - path: ./trees/mcts/3/cross_duoling_dqn
+      md5: 87fcb627f40e3b761a819b3797401b36.dir
+      size: 80105603
+      nfiles: 2
+  precompute-mcts-circle-duoling_dqn:
+    cmd: python ./precompute_mctc_tree.py -cn mcts_precompute_circle_3x3_duoling_dqn
+    deps:
+    - path: ./configs/mcts_precompute_circle_3x3_duoling_dqn.yaml
+      md5: 0e8acf39211adbd9195fd0ea1549fc09
+      size: 552
+    - path: ./precompute_mctc_tree.py
+      md5: 8cee4492475daca0c13e812bcb8c4ab0
+      size: 1398
+    - path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+      md5: 3cc3797e6781edce02eb617756be9c97
+      size: 64100756
+    params:
+      configs/mcts_precompute_circle_3x3_duoling_dqn.yaml:
+        num_simulation: 10000
+    outs:
+    - path: ./trees/mcts/3/circle_duoling_dqn
+      md5: 564421e1d93785ad3f070b820ac4d858.dir
+      size: 78803253
+      nfiles: 1
+  compute-stat-3x3:
+    cmd: python ./simulate_game.py -m hydra.sweep.dir=./stat/game_simul/3 cross_player=dqn,duoling_dqn,mcts_dueling_dqn,mcts_q_table,mcts_random,q-table,rand_minmax,random
+      circle_player=dqn,duoling_dqn,mcts_dueling_dqn,mcts_q_table,mcts_random,q-table,rand_minmax,random
+      -cn simulate_games.yaml
+    deps:
+    - path: ./configs/simulate_games.yaml
+      md5: 9e6e355f57731328cfa79ddead7aba9e
+      size: 364
+    - path: ./simulate_game.py
+      md5: a5be7696a7f273d2f95ea768ef916343
+      size: 2675
+    params:
+      configs/simulate_games.yaml:
+        num_sim: 2000
+        random_action_proba: 0.09
+    outs:
+    - path: ./stat/game_simul/3
+      md5: 0443e466fe38aa8f7bc18fe58c646b74.dir
+      size: 282548
+      nfiles: 321

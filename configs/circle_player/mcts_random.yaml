@@ -1,0 +1,6 @@
+name: 'mcts-rollout-random'
+object:
+  _target_: tictac_rl.policies.policy.TreePolicy
+  tree:
+    _target_: tictac_rl.utils.load_from_dump
+    path_to_file: ${hydra:runtime.cwd}/trees/mcts/3/circle_duoling_dqn/3_3_3_circle_start_1.pickle

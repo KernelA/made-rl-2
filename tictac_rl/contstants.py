@@ -1,0 +1,3 @@
+PICKLE_PROTOCOL = 3
+
+EMPTY_STATE = "empty"

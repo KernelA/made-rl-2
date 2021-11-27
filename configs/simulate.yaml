@@ -1,0 +1,19 @@
+hydra:
+  run:
+    dir: .
+  sweep:
+    dir: stat/cross_min_max_vs_random/game_stats_simulation
+    subdir: ${hydra.job.num}_${random_action_proba}
+
+defaults:
+  - env: env3x3
+  - cross_policy: tree_from_dump
+  - circle_policy: random
+  - override hydra/launcher: joblib
+  - _self_
+
+num_sim: 2000
+random_action_proba: null
+metric_file: ./game_stat.json
+
+train_config: null

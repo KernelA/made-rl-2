@@ -107,7 +107,6 @@ celerybeat.pid
 # Environments
 .env
 .venv
-env/
 venv/
 ENV/
 env.bak/
@@ -136,3 +135,9 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+.vscode/
+!tictac_rl/env/
+!configs/env
+
+multirun/

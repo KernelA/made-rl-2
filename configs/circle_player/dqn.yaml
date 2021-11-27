@@ -1,0 +1,4 @@
+name: 'dqn'
+object:
+  _target_: tictac_rl.utils.load_from_dump
+  path_to_file: ${hydra:runtime.cwd}/exp/dqn_learning/circle/2_alpha=0.0001_gamma=0.25/policies/circle.pickle

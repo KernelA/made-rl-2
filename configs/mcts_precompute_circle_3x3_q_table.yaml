@@ -1,0 +1,27 @@
+hydra:
+  run:
+    dir: .
+  output_subdir: null
+
+defaults:
+  - env: env3x3
+  - cross_policy: random
+  - circle_policy: mcts_with_policy
+  - _self_
+
+circle_policy:
+  tree: 
+    env: ${env}
+    cross_policy:
+      _target_: tictac_rl.policies.policy.RandomPolicy
+    circle_policy:
+      _target_: tictac_rl.utils.load_from_dump
+      path_to_file: ${hydra:runtime.cwd}/exp/table_q_learning/circle/2_alpha=0.5_gamma=0.8/policies/circle.pickle
+
+# cross_policy:
+#   tree:
+#     path_to_file: ${hydra:runtime.cwd}/trees/minmax/3/cross/3_3_3_start_1.pickle
+
+out_dir: ./trees/mcts/3/circle_q_table
+
+num_simulation: 10000
