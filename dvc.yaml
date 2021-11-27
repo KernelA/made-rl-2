@@ -411,3 +411,18 @@ stages:
       - ./configs/table_q_learning.yaml
     outs:
       - ${out_dir}
+
+  compute-stat-3x3:
+    vars:
+      - out_dir: ./stat/game_simul/3 
+      - config_name: simulate_games
+    cmd: python ./simulate_game.py -m hydra.sweep.dir=${out_dir} cross_player=dqn,duoling_dqn,mcts_dueling_dqn,mcts_q_table,mcts_random,q-table,rand_minmax,random circle_player=dqn,duoling_dqn,mcts_dueling_dqn,mcts_q_table,mcts_random,q-table,rand_minmax,random -cn ${config_name}.yaml
+    deps:
+      - ./simulate_game.py 
+      - ./configs/${config_name}.yaml
+    params:
+      - ./configs/${config_name}.yaml:
+         - num_sim
+         - random_action_proba
+    outs:
+      - ${out_dir}

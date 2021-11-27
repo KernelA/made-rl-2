@@ -1,0 +1,6 @@
+name: 'rand-minmax'
+object:
+  _target_: tictac_rl.policies.policy.TreePolicy
+  tree:
+    _target_: tictac_rl.utils.load_from_dump
+    path_to_file: ${hydra:runtime.cwd}/trees/minmax/3/cross/3_3_3_start_1.pickle

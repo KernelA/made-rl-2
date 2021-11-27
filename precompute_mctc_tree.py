@@ -5,7 +5,7 @@ import logging
 
 import hydra
 
-from tictac_rl import TicTacToe, simulate, GameTreeBase, TreePolicy
+from tictac_rl import TicTacToe, simulate, GameTreeBase, TreePolicy, MCTS
 
 
 @hydra.main(config_path="configs", config_name="mcts_precompute")
@@ -27,14 +27,14 @@ def main(config):
     path_to_dump = os.path.join(config.out_dir,
                                 f"{env.n_rows}_{env.n_cols}_{env.n_win}_start_{env._start_player}.pickle")
 
-    if isinstance(cross_policy, TreePolicy):
+    if isinstance(cross_policy, TreePolicy) and isinstance(cross_policy.tree, MCTS):
         path_to_dump = os.path.join(
             config.out_dir, f"{env.n_rows}_{env.n_cols}_{env.n_win}_cross_start_{env._start_player}.pickle")
         cross_policy.tree.dump(path_to_dump)
 
     del cross_policy
 
-    if isinstance(circle_policy, TreePolicy):
+    if isinstance(circle_policy, TreePolicy) and isinstance(circle_policy.tree, MCTS):
         path_to_dump = os.path.join(
             config.out_dir, f"{env.n_rows}_{env.n_cols}_{env.n_win}_circle_start_{env._start_player}.pickle")
         circle_policy.tree.dump(path_to_dump)

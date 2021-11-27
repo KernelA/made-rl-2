@@ -8,6 +8,7 @@ import numpy as np
 from omegaconf import OmegaConf
 
 import log_set
+from tictac_rl.min_max_tree import MinMaxTree
 from tictac_rl import TreePolicy, simulate
 from tictac_rl.env import CROSS_PLAYER, CIRCLE_PLAYER, DRAW
 from tictac_rl.utils import load_from_dump, compute_game_stat
@@ -25,13 +26,24 @@ def main(config):
         cross_policy = load_from_dump(str(policy_dir / "cross.pickle"))
         circle_policy = load_from_dump(str(policy_dir / "circle.pickle"))
     else:
-        cross_policy = hydra.utils.instantiate(config.cross_policy)
-        circle_policy = hydra.utils.instantiate(config.circle_policy)
+        if "cross_policy" in config:
+            cross_policy = hydra.utils.instantiate(config.cross_policy)
+        elif "cross_player" in config:
+            cross_policy = hydra.utils.instantiate(config.cross_player.object)
+        else:
+             raise ValueError("Cannot find config for cross policy")
 
-        if isinstance(cross_policy, TreePolicy) and config.random_action_proba is not None:
+        if "circle_policy" in config:
+            circle_policy = hydra.utils.instantiate(config.circle_policy)
+        elif "circle_player" in config:
+            circle_policy = hydra.utils.instantiate(config.circle_player.object)
+        else:
+            raise ValueError("Cannot find config for circle policy")
+
+        if isinstance(cross_policy, TreePolicy) and config.random_action_proba is not None and isinstance(cross_policy.tree, MinMaxTree):
             cross_policy.tree.set_random_proba(config.random_action_proba)
 
-        if isinstance(circle_policy, TreePolicy) and config.random_action_proba is not None:
+        if isinstance(circle_policy, TreePolicy) and config.random_action_proba is not None and isinstance(circle_policy.tree, MinMaxTree):
             circle_policy.tree.set_random_proba(config.random_action_proba)
 
     env = hydra.utils.instantiate(config.env)

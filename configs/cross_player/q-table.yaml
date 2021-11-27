@@ -1,0 +1,4 @@
+name: 'q-table'
+object:
+  _target_: tictac_rl.utils.load_from_dump
+  path_to_file: ${hydra:runtime.cwd}/exp/table_q_learning/cross/0_alpha=0.5_gamma=0.1/policies/cross.pickle

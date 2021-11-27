@@ -627,3 +627,23 @@ stages:
       md5: 564421e1d93785ad3f070b820ac4d858.dir
       size: 78803253
       nfiles: 1
+  compute-stat-3x3:
+    cmd: python ./simulate_game.py -m hydra.sweep.dir=./stat/game_simul/3 cross_player=dqn,duoling_dqn,mcts_dueling_dqn,mcts_q_table,mcts_random,q-table,rand_minmax,random
+      circle_player=dqn,duoling_dqn,mcts_dueling_dqn,mcts_q_table,mcts_random,q-table,rand_minmax,random
+      -cn simulate_games.yaml
+    deps:
+    - path: ./configs/simulate_games.yaml
+      md5: 9e6e355f57731328cfa79ddead7aba9e
+      size: 364
+    - path: ./simulate_game.py
+      md5: a5be7696a7f273d2f95ea768ef916343
+      size: 2675
+    params:
+      configs/simulate_games.yaml:
+        num_sim: 2000
+        random_action_proba: 0.09
+    outs:
+    - path: ./stat/game_simul/3
+      md5: 0443e466fe38aa8f7bc18fe58c646b74.dir
+      size: 282548
+      nfiles: 321
