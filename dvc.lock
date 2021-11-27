@@ -547,3 +547,83 @@ stages:
       md5: 6b1639f4a152f975f18b2bf57423c9ff.dir
       size: 112532141
       nfiles: 1
+  precompute-mcts-cross-qtable:
+    cmd: python ./precompute_mctc_tree.py -cn mcts_precompute_cross_3x3_q_table
+    deps:
+    - path: ./configs/mcts_precompute_cross_3x3_q_table.yaml
+      md5: e76f8fb32d6fcc66a1cae5638a6675d5
+      size: 612
+    - path: ./precompute_mctc_tree.py
+      md5: 8cee4492475daca0c13e812bcb8c4ab0
+      size: 1398
+    - path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+      md5: 3cc3797e6781edce02eb617756be9c97
+      size: 64100756
+    params:
+      configs/mcts_precompute_cross_3x3_q_table.yaml:
+        num_simulation: 10000
+    outs:
+    - path: ./trees/mcts/3/cross_q_table
+      md5: 40351c6c035cea14015e4f01c1b6cc63.dir
+      size: 81116318
+      nfiles: 2
+  precompute-mcts-circle-qtable:
+    cmd: python ./precompute_mctc_tree.py -cn mcts_precompute_circle_3x3_q_table
+    deps:
+    - path: ./configs/mcts_precompute_circle_3x3_q_table.yaml
+      md5: 30ab3aa94f69fb0e0f4f96c67a293696
+      size: 613
+    - path: ./precompute_mctc_tree.py
+      md5: 8cee4492475daca0c13e812bcb8c4ab0
+      size: 1398
+    - path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+      md5: 3cc3797e6781edce02eb617756be9c97
+      size: 64100756
+    params:
+      configs/mcts_precompute_circle_3x3_q_table.yaml:
+        num_simulation: 10000
+    outs:
+    - path: ./trees/mcts/3/circle_q_table
+      md5: 3bb7e85976c43cb65d2e8788bb650296.dir
+      size: 81509197
+      nfiles: 1
+  precompute-mcts-cross-duoling_dqn:
+    cmd: python ./precompute_mctc_tree.py -cn mcts_precompute_cross_3x3_duoling_dqn
+    deps:
+    - path: ./configs/mcts_precompute_cross_3x3_duoling_dqn.yaml
+      md5: b23717adea312a8733b4d91576839b98
+      size: 623
+    - path: ./precompute_mctc_tree.py
+      md5: 8cee4492475daca0c13e812bcb8c4ab0
+      size: 1398
+    - path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+      md5: 3cc3797e6781edce02eb617756be9c97
+      size: 64100756
+    params:
+      configs/mcts_precompute_cross_3x3_duoling_dqn.yaml:
+        num_simulation: 10000
+    outs:
+    - path: ./trees/mcts/3/cross_duoling_dqn
+      md5: 87fcb627f40e3b761a819b3797401b36.dir
+      size: 80105603
+      nfiles: 2
+  precompute-mcts-circle-duoling_dqn:
+    cmd: python ./precompute_mctc_tree.py -cn mcts_precompute_circle_3x3_duoling_dqn
+    deps:
+    - path: ./configs/mcts_precompute_circle_3x3_duoling_dqn.yaml
+      md5: 0e8acf39211adbd9195fd0ea1549fc09
+      size: 552
+    - path: ./precompute_mctc_tree.py
+      md5: 8cee4492475daca0c13e812bcb8c4ab0
+      size: 1398
+    - path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+      md5: 3cc3797e6781edce02eb617756be9c97
+      size: 64100756
+    params:
+      configs/mcts_precompute_circle_3x3_duoling_dqn.yaml:
+        num_simulation: 10000
+    outs:
+    - path: ./trees/mcts/3/circle_duoling_dqn
+      md5: 564421e1d93785ad3f070b820ac4d858.dir
+      size: 78803253
+      nfiles: 1

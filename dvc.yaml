@@ -38,6 +38,70 @@ stages:
     outs:
       - ${out_dir}
 
+  precompute-mcts-cross-qtable:
+    vars:
+      - config_file: mcts_precompute_cross_3x3_q_table
+      - ./configs/mcts_precompute_cross_3x3_q_table.yaml:out_dir
+      - tree_file: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+    cmd: python ./precompute_mctc_tree.py -cn ${config_file}
+    deps:
+      - ./precompute_mctc_tree.py
+      - ./configs/${config_file}.yaml
+      - ${tree_file}
+    params:
+      - ./configs/${config_file}.yaml:
+          - num_simulation
+    outs:
+      - ${out_dir}
+
+  precompute-mcts-cross-duoling_dqn:
+    vars:
+      - config_file: mcts_precompute_cross_3x3_duoling_dqn
+      - ./configs/mcts_precompute_cross_3x3_duoling_dqn.yaml:out_dir
+      - tree_file: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+    cmd: python ./precompute_mctc_tree.py -cn ${config_file}
+    deps:
+      - ./precompute_mctc_tree.py
+      - ./configs/${config_file}.yaml
+      - ${tree_file}
+    params:
+      - ./configs/${config_file}.yaml:
+          - num_simulation
+    outs:
+      - ${out_dir}
+  
+  precompute-mcts-circle-duoling_dqn:
+    vars:
+      - config_file: mcts_precompute_circle_3x3_duoling_dqn
+      - ./configs/mcts_precompute_circle_3x3_duoling_dqn.yaml:out_dir
+      - tree_file: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+    cmd: python ./precompute_mctc_tree.py -cn ${config_file}
+    deps:
+      - ./precompute_mctc_tree.py
+      - ./configs/${config_file}.yaml
+      - ${tree_file}
+    params:
+      - ./configs/${config_file}.yaml:
+          - num_simulation
+    outs:
+      - ${out_dir}
+
+  precompute-mcts-circle-qtable:
+    vars:
+      - config_file: mcts_precompute_circle_3x3_q_table
+      - ./configs/mcts_precompute_circle_3x3_q_table.yaml:out_dir
+      - tree_file: ./trees/minmax/3/cross/3_3_3_start_1.pickle
+    cmd: python ./precompute_mctc_tree.py -cn ${config_file}
+    deps:
+      - ./precompute_mctc_tree.py
+      - ./configs/${config_file}.yaml
+      - ${tree_file}
+    params:
+      - ./configs/${config_file}.yaml:
+          - num_simulation
+    outs:
+      - ${out_dir}
+
   precompute-mcts-circle-random:
       vars:
         - config_file: mcts_precompute_circle_3x3_random

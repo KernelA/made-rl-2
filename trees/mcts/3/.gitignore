@@ -1,2 +1,6 @@
 /cross_random
 /circle_random
+/cross_q_table
+/circle_q_table
+/cross_duoling_dqn
+/circle_duoling_dqn
