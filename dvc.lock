@@ -207,14 +207,14 @@ stages:
       size: 54063
   q-table-learning-train-cross:
     cmd: python ./q_learn_params.py -m circle_policy.tree.path_to_file='${hydra:runtime.cwd}'/./trees/minmax/3/cross/3_3_3_start_1.pickle
-      learning_rate=0.5,0.8,0.9 gamma=0.1,0.5,0.8 hydra.sweep.dir=./exp/table_q_learning/cross
+      q_learner.alpha=0.5,0.8,0.9 q_learner.gamma=0.1,0.5,0.8 hydra.sweep.dir=./exp/table_q_learning/cross
     deps:
-    - path: ./configs/simulate.yaml
-      md5: a4bb38cb6fbbff1569eebaecdee208b1
-      size: 367
+    - path: ./configs/table_q_learning.yaml
+      md5: 4ff8cdb8f12342a916b5f6a3d6b44e84
+      size: 581
     - path: ./q_learn_params.py
-      md5: 8e37819a9e7be871206c80bcc753f9ac
-      size: 3407
+      md5: fd0c045298c38fa27ac0fcb4b96d74e7
+      size: 3817
     - path: ./trees/minmax/3/cross/3_3_3_start_1.pickle
       md5: 3cc3797e6781edce02eb617756be9c97
       size: 64100756
@@ -226,8 +226,8 @@ stages:
         tree_random_action_proba: 0.09
     outs:
     - path: ./exp/table_q_learning/cross
-      md5: 90cde68f941eaa5eb450849cb367c1b4.dir
-      size: 592632410
+      md5: db6b889b57ec41760a3c84a977c4a4f0.dir
+      size: 594041244
       nfiles: 109
   q-table-learning-train-circle:
     cmd: python ./q_learn_params.py -m circle_policy=q_learning cross_policy=tree_from_dump
