@@ -46,19 +46,19 @@ jobs:
           pip install -r requirements.txt -r requirements.dev.txt
 
 
-      - name: Prepare DVC cache
-        env:
-          GDRIVE_CREDENTIALS_DATA: ${{ secrets.DVC_DATA_SECRET }}
-          DVC_SECRET_FILE: ${{ secrets.DVC_SECRET_FILE }}
-        run: |
-          cat << EOF > ./.dvc/config.local
-          ['remote "data"']
-            gdrive_service_account_json_file_path = ${{ github.workspace }}/${DVC_SECRET_FILE}
-          EOF
+      # - name: Prepare DVC cache
+      #   env:
+      #     GDRIVE_CREDENTIALS_DATA: ${{ secrets.DVC_DATA_SECRET }}
+      #     DVC_SECRET_FILE: ${{ secrets.DVC_SECRET_FILE }}
+      #   run: |
+      #     cat << EOF > ./.dvc/config.local
+      #     ['remote "data"']
+      #       gdrive_service_account_json_file_path = ${{ github.workspace }}/${DVC_SECRET_FILE}
+      #     EOF
 
-          dvc pull precompute-tree@1
-          dvc pull precompute-tree@0
+      #     dvc pull precompute-tree@1
+      #     dvc pull precompute-tree@0
 
-      - name: Test with pytest
-        run: pytest ./tests
+      # - name: Test with pytest
+      #   run: pytest ./tests
       
