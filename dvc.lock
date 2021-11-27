@@ -647,3 +647,124 @@ stages:
       md5: 0443e466fe38aa8f7bc18fe58c646b74.dir
       size: 282548
       nfiles: 321
+  precompute-mcts-cross-4x4-random:
+    cmd: python ./precompute_mctc_tree.py -cn mcts_precompute_cross_4x4_random
+    deps:
+    - path: ./configs/mcts_precompute_cross_4x4_random.yaml
+      md5: d80d63d17e7936f324a79afb8ad54f6e
+      size: 412
+    - path: ./precompute_mctc_tree.py
+      md5: 8c143b2591abdf9f48a5a61663f8a902
+      size: 1485
+    params:
+      configs/mcts_precompute_cross_4x4_random.yaml:
+        num_simulation: 3000
+    outs:
+    - path: ./trees/mcts/4/cross_random
+      md5: 1ca9206833773daf87dc9083e4f30840.dir
+      size: 152231281
+      nfiles: 1
+  precompute-mcts-cross-4x4-qtable:
+    cmd: python ./precompute_mctc_tree.py -cn mcts_precompute_cross_4x4_q_table
+    deps:
+    - path: ./configs/mcts_precompute_cross_4x4_q_table.yaml
+      md5: d8bd519b1b73577c94394cdab837886f
+      size: 557
+    - path: ./precompute_mctc_tree.py
+      md5: 8c143b2591abdf9f48a5a61663f8a902
+      size: 1485
+    params:
+      configs/mcts_precompute_cross_4x4_q_table.yaml:
+        num_simulation: 3000
+    outs:
+    - path: ./trees/mcts/4/cross_q_table
+      md5: 581f279856be6b63b080cfa2a9811375.dir
+      size: 665567195
+      nfiles: 1
+  precompute-mcts-cross-4x4-dqn:
+    cmd: python ./precompute_mctc_tree.py -cn mcts_precompute_cross_4x4_dqn
+    deps:
+    - path: ./configs/mcts_precompute_cross_4x4_dqn.yaml
+      md5: 170d70babcacce343365e5d5abcc7046
+      size: 552
+    - path: ./precompute_mctc_tree.py
+      md5: 8c143b2591abdf9f48a5a61663f8a902
+      size: 1485
+    params:
+      configs/mcts_precompute_cross_4x4_dqn.yaml:
+        num_simulation: 3000
+    outs:
+    - path: ./trees/mcts/4/cross_dqn
+      md5: 9e7470f8b057595f1d63390c5dd8bc6b.dir
+      size: 153442771
+      nfiles: 1
+  precompute-mcts-circle-4x4-random:
+    cmd: python ./precompute_mctc_tree.py -cn mcts_precompute_circle_4x4_random
+    deps:
+    - path: ./configs/mcts_precompute_circle_4x4_random.yaml
+      md5: 0df69361d8bbbb6ec4c66a4a6e79d8b0
+      size: 435
+    - path: ./precompute_mctc_tree.py
+      md5: 8c143b2591abdf9f48a5a61663f8a902
+      size: 1485
+    params:
+      configs/mcts_precompute_circle_4x4_random.yaml:
+        num_simulation: 2000
+    outs:
+    - path: ./trees/mcts/4/circle_random
+      md5: b6706bd87623696b073dfd421537c84e.dir
+      size: 215085473
+      nfiles: 1
+  precompute-mcts-circle-4x4-qtable:
+    cmd: python ./precompute_mctc_tree.py -cn mcts_precompute_circle_4x4_q_table
+    deps:
+    - path: ./configs/mcts_precompute_circle_4x4_q_table.yaml
+      md5: b8e21955bff6dd505d354a88875f2da8
+      size: 561
+    - path: ./precompute_mctc_tree.py
+      md5: 8c143b2591abdf9f48a5a61663f8a902
+      size: 1485
+    params:
+      configs/mcts_precompute_circle_4x4_q_table.yaml:
+        num_simulation: 2000
+    outs:
+    - path: ./trees/mcts/4/circle_q_table
+      md5: 4ed90df85acb2f0e03e97e71cf789a4e.dir
+      size: 1172891059
+      nfiles: 1
+  precompute-mcts-circle-4x4-dqn:
+    cmd: python ./precompute_mctc_tree.py -cn mcts_precompute_circle_4x4_dqn
+    deps:
+    - path: ./configs/mcts_precompute_circle_4x4_dqn.yaml
+      md5: 7ab8eb955b4e027306cddd83716dfc38
+      size: 556
+    - path: ./precompute_mctc_tree.py
+      md5: 8c143b2591abdf9f48a5a61663f8a902
+      size: 1485
+    params:
+      configs/mcts_precompute_circle_4x4_dqn.yaml:
+        num_simulation: 2000
+    outs:
+    - path: ./trees/mcts/4/circle_dqn
+      md5: c3cacc4c8eb806f7b6238ce5b80faf91.dir
+      size: 214713175
+      nfiles: 1
+  compute-stat-4x4:
+    cmd: python ./simulate_game.py -m hydra.sweep.dir=./stat/game_simul/4 cross_player_4x4=dqn,mcts_dqn,mcts_q_table,mcts_random,q-table,random
+      circle_player_4x4=dqn,mcts_dqn,mcts_random,q-table,random,mcts_q_table -cn simulate_games_4x4
+    deps:
+    - path: ./configs/simulate_games_4x4.yaml
+      md5: 8aa8ecaac5234e8cbe49d7d2652fcbb5
+      size: 380
+    - path: ./simulate_game.py
+      md5: e9fcf8be849e52ca85353d461447e051
+      size: 2930
+    params:
+      configs/simulate_games_4x4.yaml:
+        num_sim: 2000
+        random_action_proba: 0.09
+    outs:
+    - path: ./stat/game_simul/4
+      md5: 83acd00ad76b5d4f40d0738295f58243.dir
+      size: 161497
+      nfiles: 181

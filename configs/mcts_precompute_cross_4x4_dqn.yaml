@@ -1,0 +1,26 @@
+hydra:
+  run:
+    dir: .
+  output_subdir: null
+
+defaults:
+  - env: env4x4
+  - cross_policy: mcts_with_policy
+  - circle_policy: random
+  - _self_
+
+player_name: cross
+
+cross_policy:
+  tree: 
+    env: ${env}
+    depth_limit: 6
+    cross_policy:
+      _target_: tictac_rl.utils.load_from_dump
+      path_to_file: ${hydra:runtime.cwd}/exp/dqn_learning/4/${player_name}/0_alpha=0.0001_gamma=0.1/policies/${player_name}.pickle
+    circle_policy:
+      _target_: tictac_rl.policies.policy.RandomPolicy
+
+out_dir: ./trees/mcts/4/cross_dqn
+
+num_simulation: 2000

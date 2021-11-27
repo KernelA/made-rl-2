@@ -22,6 +22,90 @@ stages:
     outs:
       - ${out_dir}
 
+  precompute-mcts-cross-4x4-random:
+    vars:
+      - config_file: mcts_precompute_cross_4x4_random
+      - ./configs/mcts_precompute_cross_4x4_random.yaml:out_dir
+    cmd: python ./precompute_mctc_tree.py -cn ${config_file}
+    deps:
+      - ./precompute_mctc_tree.py
+      - ./configs/${config_file}.yaml
+    params:
+      - ./configs/${config_file}.yaml:
+          - num_simulation
+    outs:
+      - ${out_dir}
+
+  precompute-mcts-cross-4x4-qtable:
+    vars:
+      - config_file: mcts_precompute_cross_4x4_q_table
+      - ./configs/mcts_precompute_cross_4x4_q_table.yaml:out_dir
+    cmd: python ./precompute_mctc_tree.py -cn ${config_file}
+    deps:
+      - ./precompute_mctc_tree.py
+      - ./configs/${config_file}.yaml
+    params:
+      - ./configs/${config_file}.yaml:
+          - num_simulation
+    outs:
+      - ${out_dir}
+
+  precompute-mcts-cross-4x4-dqn:
+    vars:
+      - config_file: mcts_precompute_cross_4x4_dqn
+      - ./configs/mcts_precompute_cross_4x4_dqn.yaml:out_dir
+    cmd: python ./precompute_mctc_tree.py -cn ${config_file}
+    deps:
+      - ./precompute_mctc_tree.py
+      - ./configs/${config_file}.yaml
+    params:
+      - ./configs/${config_file}.yaml:
+          - num_simulation
+    outs:
+      - ${out_dir}
+
+  precompute-mcts-circle-4x4-random:
+    vars:
+      - config_file: mcts_precompute_circle_4x4_random
+      - ./configs/mcts_precompute_circle_4x4_random.yaml:out_dir
+    cmd: python ./precompute_mctc_tree.py -cn ${config_file}
+    deps:
+      - ./precompute_mctc_tree.py
+      - ./configs/${config_file}.yaml
+    params:
+      - ./configs/${config_file}.yaml:
+          - num_simulation
+    outs:
+      - ${out_dir}
+
+  precompute-mcts-circle-4x4-qtable:
+    vars:
+      - config_file: mcts_precompute_circle_4x4_q_table
+      - ./configs/mcts_precompute_circle_4x4_q_table.yaml:out_dir
+    cmd: python ./precompute_mctc_tree.py -cn ${config_file}
+    deps:
+      - ./precompute_mctc_tree.py
+      - ./configs/${config_file}.yaml
+    params:
+      - ./configs/${config_file}.yaml:
+          - num_simulation
+    outs:
+      - ${out_dir}
+
+  precompute-mcts-circle-4x4-dqn:
+    vars:
+      - config_file: mcts_precompute_circle_4x4_dqn
+      - ./configs/mcts_precompute_circle_4x4_dqn.yaml:out_dir
+    cmd: python ./precompute_mctc_tree.py -cn ${config_file}
+    deps:
+      - ./precompute_mctc_tree.py
+      - ./configs/${config_file}.yaml
+    params:
+      - ./configs/${config_file}.yaml:
+          - num_simulation
+    outs:
+      - ${out_dir}
+
   precompute-mcts-cross-random:
     vars:
       - config_file: mcts_precompute_cross_3x3_random
@@ -382,7 +466,7 @@ stages:
     vars:
       - ./configs/table_q_learning.yaml
       - out_dir: ./exp/duoling_dqn_learning/4/circle
-    cmd: python ./q_learn_params.py -m cross_policy=random circle_policy=duoling_network q_learner.alpha=1e-4,1e-5,1e-6 optimizer.lr='\${q_learner.alpha}' q_learner.gamma=0.1,0.5,0.25 hydra.sweep.dir=${out_dir} q_learner._target_=tictac_rl.q_learning.q_learning.DuelingQNeuralNetworkSimulation circle_policy.model.n_rows='\${env.n_rows}' circle_policy.model.n_cols='\${env.n_cols}' +q_learner.memory_capacity=10000 +q_learner.batch_size=128 +q_learner.device=cpu num_train_iterations=70000 +q_learner.target_update=10
+    cmd: python ./q_learn_params.py -m env=env4x4 cross_policy=random circle_policy=duoling_network q_learner.alpha=1e-4,1e-5,1e-6 optimizer.lr='\${q_learner.alpha}' q_learner.gamma=0.1,0.5,0.25 hydra.sweep.dir=${out_dir} q_learner._target_=tictac_rl.q_learning.q_learning.DuelingQNeuralNetworkSimulation circle_policy.model.n_rows='\${env.n_rows}' circle_policy.model.n_cols='\${env.n_cols}' +q_learner.memory_capacity=10000 +q_learner.batch_size=128 +q_learner.device=cpu num_train_iterations=70000 +q_learner.target_update=10
     params:
       - ./configs/table_q_learning.yaml:
           - num_train_iterations
@@ -399,7 +483,7 @@ stages:
     vars:
       - ./configs/table_q_learning.yaml
       - out_dir: ./exp/duoling_dqn_learning/4/cross
-    cmd: python ./q_learn_params.py -m circle_policy=random cross_policy=duoling_network q_learner.alpha=1e-4,1e-5,1e-6 optimizer.lr='\${q_learner.alpha}' q_learner.gamma=0.1,0.5,0.25 hydra.sweep.dir=${out_dir} q_learner._target_=tictac_rl.q_learning.q_learning.DuelingQNeuralNetworkSimulation cross_policy.model.n_rows='\${env.n_rows}' cross_policy.model.n_cols='\${env.n_cols}' +q_learner.memory_capacity=10000 +q_learner.batch_size=128 +q_learner.device=cpu num_train_iterations=50000 +q_learner.target_update=10
+    cmd: python ./q_learn_params.py -m env=env4x4 circle_policy=random cross_policy=duoling_network q_learner.alpha=1e-4,1e-5,1e-6 optimizer.lr='\${q_learner.alpha}' q_learner.gamma=0.1,0.5,0.25 hydra.sweep.dir=${out_dir} q_learner._target_=tictac_rl.q_learning.q_learning.DuelingQNeuralNetworkSimulation cross_policy.model.n_rows='\${env.n_rows}' cross_policy.model.n_cols='\${env.n_cols}' +q_learner.memory_capacity=10000 +q_learner.batch_size=128 +q_learner.device=cpu num_train_iterations=50000 +q_learner.target_update=10
     params:
       - ./configs/table_q_learning.yaml:
           - num_train_iterations
@@ -417,6 +501,21 @@ stages:
       - out_dir: ./stat/game_simul/3 
       - config_name: simulate_games
     cmd: python ./simulate_game.py -m hydra.sweep.dir=${out_dir} cross_player=dqn,duoling_dqn,mcts_dueling_dqn,mcts_q_table,mcts_random,q-table,rand_minmax,random circle_player=dqn,duoling_dqn,mcts_dueling_dqn,mcts_q_table,mcts_random,q-table,rand_minmax,random -cn ${config_name}.yaml
+    deps:
+      - ./simulate_game.py 
+      - ./configs/${config_name}.yaml
+    params:
+      - ./configs/${config_name}.yaml:
+         - num_sim
+         - random_action_proba
+    outs:
+      - ${out_dir}
+
+  compute-stat-4x4:
+    vars:
+      - out_dir: ./stat/game_simul/4 
+      - config_name: simulate_games_4x4
+    cmd: python ./simulate_game.py -m hydra.sweep.dir=${out_dir} cross_player_4x4=dqn,mcts_dqn,mcts_q_table,mcts_random,q-table,random circle_player_4x4=dqn,mcts_dqn,mcts_random,q-table,random,mcts_q_table -cn ${config_name}
     deps:
       - ./simulate_game.py 
       - ./configs/${config_name}.yaml
