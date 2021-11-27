@@ -1,0 +1,22 @@
+hydra:
+  run:
+    dir: .
+  sweep:
+    dir: stat/game_simul/4
+    subdir: ${cross_player_4x4.name}_vs_${circle_player_4x4.name}
+  
+  launcher:
+    n_jobs: 6
+
+defaults:
+  - env: env4x4
+  - cross_player_4x4: random
+  - circle_player_4x4: random
+  - override hydra/launcher: joblib
+  - _self_
+
+num_sim: 2000
+random_action_proba: 0.09
+metric_file: ./game_stat.json
+
+train_config: null

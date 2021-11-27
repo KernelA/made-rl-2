@@ -1,0 +1,25 @@
+hydra:
+  run:
+    dir: .
+  output_subdir: null
+
+defaults:
+  - env: env4x4
+  - cross_policy: random
+  - circle_policy: mcts_with_policy
+  - _self_
+
+player_name: circle
+
+circle_policy:
+  tree: 
+    env: ${env}
+    depth_limit: 6
+    cross_policy:
+      _target_: tictac_rl.policies.policy.RandomPolicy
+    circle_policy:
+      _target_: tictac_rl.policies.policy.RandomPolicy
+
+out_dir: ./trees/mcts/4/circle_random
+
+num_simulation: 2000

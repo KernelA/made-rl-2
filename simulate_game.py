@@ -28,6 +28,8 @@ def main(config):
     else:
         if "cross_policy" in config:
             cross_policy = hydra.utils.instantiate(config.cross_policy)
+        elif "cross_player_4x4" in config:
+            cross_policy = hydra.utils.instantiate(config.cross_player_4x4.object)
         elif "cross_player" in config:
             cross_policy = hydra.utils.instantiate(config.cross_player.object)
         else:
@@ -35,6 +37,8 @@ def main(config):
 
         if "circle_policy" in config:
             circle_policy = hydra.utils.instantiate(config.circle_policy)
+        elif "circle_player_4x4" in config:
+            circle_policy = hydra.utils.instantiate(config.circle_player_4x4.object)
         elif "circle_player" in config:
             circle_policy = hydra.utils.instantiate(config.circle_player.object)
         else:
