@@ -458,7 +458,7 @@ stages:
       size: 643651994
       nfiles: 109
   duoling-dqn-learning-train-cross-4x4:
-    cmd: python ./q_learn_params.py -m circle_policy=random cross_policy=duoling_network
+    cmd: python ./q_learn_params.py -m env=env4x4 circle_policy=random cross_policy=duoling_network
       q_learner.alpha=1e-4,1e-5,1e-6 optimizer.lr='${q_learner.alpha}' q_learner.gamma=0.1,0.5,0.25
       hydra.sweep.dir=./exp/duoling_dqn_learning/4/cross q_learner._target_=tictac_rl.q_learning.q_learning.DuelingQNeuralNetworkSimulation
       cross_policy.model.n_rows='${env.n_rows}' cross_policy.model.n_cols='${env.n_cols}'
@@ -479,11 +479,11 @@ stages:
         tree_random_action_proba: 0.09
     outs:
     - path: ./exp/duoling_dqn_learning/4/cross
-      md5: 7fd84b42f251ffdf1ed648fcf4746e3b.dir
-      size: 83721030
+      md5: 419b08358b1d8fa39182a6a4172f9560.dir
+      size: 177143014
       nfiles: 109
   duoling-dqn-learning-train-circle-4x4:
-    cmd: python ./q_learn_params.py -m cross_policy=random circle_policy=duoling_network
+    cmd: python ./q_learn_params.py -m env=env4x4 cross_policy=random circle_policy=duoling_network
       q_learner.alpha=1e-4,1e-5,1e-6 optimizer.lr='${q_learner.alpha}' q_learner.gamma=0.1,0.5,0.25
       hydra.sweep.dir=./exp/duoling_dqn_learning/4/circle q_learner._target_=tictac_rl.q_learning.q_learning.DuelingQNeuralNetworkSimulation
       circle_policy.model.n_rows='${env.n_rows}' circle_policy.model.n_cols='${env.n_cols}'
@@ -504,8 +504,8 @@ stages:
         tree_random_action_proba: 0.09
     outs:
     - path: ./exp/duoling_dqn_learning/4/circle
-      md5: 7dd998935cc6cfc284226931bd0d3914.dir
-      size: 111677519
+      md5: 8f95396123af1a02e83874651b901a52.dir
+      size: 224624232
       nfiles: 109
   precompute-mcts-cross-random:
     cmd: python ./precompute_mctc_tree.py -cn mcts_precompute_cross_3x3_random
