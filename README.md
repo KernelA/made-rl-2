@@ -2,6 +2,8 @@
 
 [Описание задания](https://docs.google.com/document/d/1laNIbABgIdjLiwHbd0sl0l_A4qGZcuQaOlQNrza82bQ/edit)
 
+**Логи запуска в notebook будут недоступны т. к. с 1 декабря 2023 web-интерфейс tensorboard dev приостаналивает работу.**
+
 ## Решение
 
 Для просмотра в Google Colab без интерактивного запуска:
